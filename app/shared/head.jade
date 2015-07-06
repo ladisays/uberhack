@@ -1,0 +1,30 @@
+meta(name='HandheldFriendly' content='True')
+meta(name='MobileOptimized' content='320')
+meta(name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
+link(rel='shortcut icon', href='/img/olympics-icon.png', type='image/png')
+
+base(href="/")
+
+// CDN provided
+link(rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" type="text/css")
+link(href='//fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css')
+link(href='//fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css')
+
+//build:css /dist/style.css
+link(rel="stylesheet" href="/lib/materialize/dist/css/materialize.css" type="text/css")
+link(rel="stylesheet" href="/css/styles.css" type="text/css")
+// endbuild
+
+// build:js /dist/lib.js
+script(type="text/javascript" src="../../lib/jquery/dist/jquery.min.js")
+script(type="text/javascript" src="../../lib/materialize/dist/js/materialize.js")
+script(type="text/javascript" src="../../lib/lodash/lodash.min.js")
+script(type="text/javascript" src="../../lib/moment/moment.js")
+script(type="text/javascript" src="../../lib/angular/angular.js")
+script(type="text/javascript" src="../../lib/angular-route/angular-route.js")
+script(type="text/javascript" src="../../lib/angular-cookies/angular-cookies.js")
+script(type="text/javascript" src="../../lib/firebase/firebase.js")
+script(type="text/javascript" src="../../lib/angularfire/dist/angularfire.js")
+// endbuild
+
+script(type="text/javascript" src="/js/index.js")
