@@ -2,6 +2,11 @@ var development = {
   firebase: {
     rootRefUrl: 'https://uberhack.firebaseio.com/',
     secretKey: 'XdnvC4rydo94hwAQlhl7lcumFUNBUSnw8gYoMcw6'
+  },
+  calendar: {
+    clientId: '453264479059-fc56k30fdhl07leahq5n489ct7ifk7md.apps.googleusercontent.com',
+    clientSecret: 'XA-7mkghxVKC-iXkCR9VnAbe',
+    callBackURL: 'http://localhost:5555/calendar/callback'
   }
 };
 
@@ -11,8 +16,9 @@ var test = {
     secretKey: 'XdnvC4rydo94hwAQlhl7lcumFUNBUSnw8gYoMcw6'
   },
   calendar: {
-    clientId: '453264479059-blnv47nes2dlj1p74jt1f7odhb9g751b.apps.googleusercontent.com',
-    clientSecret: 'V0mMCh8syjE9MUn9mZkc8GxF'
+    clientId: '453264479059-fc56k30fdhl07leahq5n489ct7ifk7md.apps.googleusercontent.com',
+    clientSecret: 'XA-7mkghxVKC-iXkCR9VnAbe',
+    callBackURL: 'http://localhost:5555/calendar/callback'
   }
 };
 
@@ -22,8 +28,9 @@ var production = {
     secretKey: 'XdnvC4rydo94hwAQlhl7lcumFUNBUSnw8gYoMcw6'
   },
   calendar: {
-    clientId: '453264479059-blnv47nes2dlj1p74jt1f7odhb9g751b.apps.googleusercontent.com',
-    clientSecret: 'V0mMCh8syjE9MUn9mZkc8GxF'
+    clientId: '453264479059-fc56k30fdhl07leahq5n489ct7ifk7md.apps.googleusercontent.com',
+    clientSecret: 'XA-7mkghxVKC-iXkCR9VnAbe',
+    callBackURL: 'http://localhost:5555/calendar/callback'
   }
 };
 
@@ -33,8 +40,9 @@ var staging = {
     secretKey: 'XdnvC4rydo94hwAQlhl7lcumFUNBUSnw8gYoMcw6'
   },
   calendar: {
-    clientId: '453264479059-blnv47nes2dlj1p74jt1f7odhb9g751b.apps.googleusercontent.com',
-    clientSecret: 'V0mMCh8syjE9MUn9mZkc8GxF'
+    clientId: '453264479059-fc56k30fdhl07leahq5n489ct7ifk7md.apps.googleusercontent.com',
+    clientSecret: 'XA-7mkghxVKC-iXkCR9VnAbe',
+    callBackURL: 'http://localhost:5555/calendar/callback'
   }
 };
 
