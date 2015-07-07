@@ -16,14 +16,14 @@ var development = {
     scopes:              ["profile", "history_lite"],
     base_uber_url:       "https://api.uber.com/v1/",
     base_uber_url_v1_1 : "https://api.uber.com/v1.1/",
-    redirect_url:        "http://localhost/uber/callback"
+    redirect_url:        "http://localhost:5555/uber/callback",
+    secretKey:           "57am6kbYes-z2AP09g2IiQExJsZeracb0WIiu1Js"
     // start_latitude:      "37.781955",
     // start_longitude:     "-122.402367",
     // end_latitude:        "37.744352",
     // end_longitude:       "-122.416743"
   }
 };
-
 
 var test = {
   firebase: {
