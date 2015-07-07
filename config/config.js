@@ -9,7 +9,7 @@ var development = {
     callBackURL: 'http://localhost:5555/calendar/callback'
   },
   uber: {
-    clientId:            'rr2NzvHi69QJalUHz0ImU1KidoE1KGc5'
+    clientId:            'rr2NzvHi69QJalUHz0ImU1KidoE1KGc5',
     access_token_url:    "https://login.uber.com/oauth/token",
     authorize_url:       "https://login.uber.com/oauth/authorize",
     base_url:            "https://login.uber.com/",

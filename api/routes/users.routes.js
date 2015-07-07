@@ -10,18 +10,18 @@ module.exports = function(app, config) {
 
   var OAuth2 = OAuth.OAuth2;
 
-  var oauth2 = new oAuth2(
-    config.firebase.uber.clientId,
-    config.firebase.secretKey,
+  var oauth2 = new OAuth2(
+    config.uber.clientId,
+    config.secretKey,
     "uberhack",
-    config.firebase.uber.authorize_url,
-    config.firebase.uber.access_token_url,
-    config.firebase.uber.base_uber_url
+    config.uber.authorize_url,
+    config.uber.access_token_url,
+    config.uber.base_uber_url
   )
 
   parameters = {
     'response_type': 'code',
-    'redirect_uri': config.firebase.uber.redirect_url,
+    'redirect_uri': config.uber.redirect_url,
     'scope': 'profile'
   }
 
