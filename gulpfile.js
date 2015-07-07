@@ -81,8 +81,9 @@ gulp.task('watch', function() {
 });
 
 gulp.task('bower', function() {
-  return bower()
-    .pipe(gulp.dest('public/lib/'));
+  // return bower()
+  //   .pipe(gulp.dest('public/lib/'));
+  console.log('No bower');
 });
 
 gulp.task('test:server', ['test:client'], function() {
