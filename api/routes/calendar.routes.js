@@ -1,8 +1,8 @@
-var Firebase = require('firebase'),
-  needle = require('needle'),
-  google = require('googleapis'),
-  googleAuth = require('google-auth-library');
-_ = require('lodash');
+var Firebase      = require('firebase'),
+  needle          = require('needle'),
+  google          = require('googleapis'),
+  googleAuth      = require('google-auth-library'),
+  _               = require('lodash');
 
 module.exports = function(app, config) {
   var root = new Firebase(config.firebase.rootRefUrl),
@@ -14,19 +14,19 @@ module.exports = function(app, config) {
     .get(function(req, res) {
       if (!authed) {
         var url = oAuthClient.generateAuthUrl({
-          access_type: 'offline',
-          scope: 'https://www.googleapis.com/auth/calendar.readonly'
+          access_type   : 'offline',
+          scope         : 'https://www.googleapis.com/auth/calendar.readonly'
         });
         res.redirect(url);
       } else {
         var calendar = google.calendar('v3');
         calendar.events.list({
-          calendarId: 'primary',
-          maxResults: 10,
-          timeMin: (new Date()).toISOString(),
-          singleEvents: true,
-          orderBy: 'startTime',
-          auth: oAuthClient
+          calendarId    : 'primary',
+          maxResults    : 10,
+          timeMin       : (new Date()).toISOString(),
+          singleEvents  : true,
+          orderBy       : 'startTime',
+          auth          : oAuthClient
         }, function(err, response) {
           if (err) {
             console.log('The API returned an error: ' + err);
@@ -44,12 +44,12 @@ module.exports = function(app, config) {
             for (var i = 0; i < events.length; i++) {
               var event = events[i],
                 eventDetails = {};
-              eventDetails.start = event.start.dateTime || event.start.date;
-              eventDetails.end = event.end.dateTime || event.end.date;
-              eventDetails.status = event.status;
-              eventDetails.location = event.location;
-              eventDetails.organiser = event.organiser;
-              eventDetails.summary = event.summary;
+              eventDetails.start      = event.start.dateTime || event.start.date;
+              eventDetails.end        = event.end.dateTime || event.end.date;
+              eventDetails.status     = event.status;
+              eventDetails.location   = event.location;
+              eventDetails.organiser  = event.organiser;
+              eventDetails.summary    = event.summary;
               selectedEvents.push(eventDetails);
             }
             return res.json(selectedEvents);
