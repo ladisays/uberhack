@@ -27,6 +27,7 @@
     "express": "^4.9.5",
     "firebase": "2.2.0",
     "firebase-token-generator": "^2.0.0",
+    "geocoder": "^0.2.2",
     "google-auth-library": "^0.9.6",
     "googleapis": "^2.0.6",
     "gulp": "^3.8.7",

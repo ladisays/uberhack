@@ -48,8 +48,10 @@ module.exports = function(app, config) {
     oauth2.getOAuthAccessToken(code, parameters, function(err, access_token, refresh_token, results) {
       if (err) {
         console.log(err);
+        return resp.json({error: err});
       }
 
+      console.log(results);
       var access_token = results.access_token;
 
       var url = 'https://api.uber.com/v1/me';
