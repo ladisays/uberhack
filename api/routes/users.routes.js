@@ -65,21 +65,19 @@ module.exports = function(app, config) {
          root.child('users').child(data.uuid).once('value', function (snap) {
           if(snap.val()) {
             console.log('User exists');
-            resp.send({message: 'User found', response: data});
+            return resp.send({message: 'User found', response: data});
           }
           else {
             root.child('users').child(data.uuid).set(data, function(err) {
               if(!err) {
                 console.log('saved user');
-                resp.send({message: 'User created', response: data});
+                return resp.send({message: 'User created', response: data});
               }
             });
           }
          });
         }
       });
-
     });
-
   });
 };
