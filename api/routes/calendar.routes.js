@@ -87,4 +87,45 @@ module.exports = function(app, config) {
         }
       });
     });
+
+  app.route('/calendar/:access_token')
+    .post(function(req, res) {
+      var access_token = req.params.access_token;
+      var calendar = google.calendar('v3');
+      calendar.events.list({
+        calendarId: 'primary',
+        maxResults: 10,
+        timeMin: (new Date()).toISOString(),
+        singleEvents: true,
+        orderBy: 'startTime',
+        auth: access_token
+      }, function(err, response) {
+        if (err) {
+          console.log('The API returned an error: ' + err);
+          return;
+        }
+        var events = response.items;
+        if (events.length === 0) {
+          console.log('No upcoming events found.');
+          return res.json({
+            err: 'No upcoming events found.'
+          });
+        } else {
+          console.log('Upcoming 10 events: ', events);
+          var selectedEvents = [];
+          for (var i = 0; i < events.length; i++) {
+            var event = events[i],
+              eventDetails = {};
+            eventDetails.start = event.start.dateTime || event.start.date;
+            eventDetails.end = event.end.dateTime || event.end.date;
+            eventDetails.status = event.status;
+            eventDetails.location = event.location;
+            eventDetails.organiser = event.organiser;
+            eventDetails.summary = event.summary;
+            selectedEvents.push(eventDetails);
+          }
+          return res.json(selectedEvents);
+        }
+      });
+    });
 };
