@@ -2,6 +2,7 @@ var users = require('./users.routes'),
   calendar = require('./calendar.routes'),
   requests = require('./requests.routes'),
   shared = require('./shared.routes'),
+  schedule = require('./schedule.routes'),
   keepalive = require('./keep-alive.routes'),
   location = require('./location.routes');
 
@@ -12,4 +13,5 @@ module.exports = function(app, config) {
   shared(app, config);
   keepalive(app, config);
   location(app, config);
+  schedule(app, config);
 };
