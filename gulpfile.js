@@ -16,7 +16,8 @@ var browserify = require('browserify'),
     stringify = require('stringify'),
     watchify = require('watchify'),
     mocha = require('gulp-mocha'),
-    exit = require('gulp-exit');
+    exit = require('gulp-exit'),
+    request = require('request');
 
 var paths = {
   public: 'public/**',
@@ -95,6 +96,22 @@ gulp.task('test:server', ['test:client'], function() {
   .pipe(exit());
 });
 
+gulp.task('keep-alive', function () {
+  var env = process.env.NODE_ENV || 'development';
+
+  if (env === 'production') {
+    var apiHost = process.env.API_URL || 'http://localhost:5555';
+    setInterval(function() {
+      request.get(apiHost + '/keep-alive', {}, function (err, res, body) {
+        if (err) {
+          return err;
+        }
+        console.log('This is the response from the API server: ', body);
+      });
+    }, 300000);
+  }
+})
+
 gulp.task('build', ['bower', 'jade', 'styles', 'browserify', 'static-files']);
 gulp.task('production', ['nodemon', 'build']);
-gulp.task('default', ['nodemon', 'build', 'watch']);
+gulp.task('default', ['nodemon', 'build', 'keep-alive', 'watch']);
