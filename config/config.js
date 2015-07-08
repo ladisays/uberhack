@@ -41,7 +41,7 @@ var production = {
   calendar: {
     clientId: '453264479059-fc56k30fdhl07leahq5n489ct7ifk7md.apps.googleusercontent.com',
     clientSecret: 'XA-7mkghxVKC-iXkCR9VnAbe',
-    callBackURL: 'http://localhost:5555/calendar/callback'
+    callBackURL: 'https://andelahack.herokuapp.com/calendar/callback'
   },
   uber: {
     clientId:            'rr2NzvHi69QJalUHz0ImU1KidoE1KGc5',
