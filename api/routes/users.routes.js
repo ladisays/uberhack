@@ -1,8 +1,8 @@
-var Firebase = require('firebase');
+var Firebase     = require('firebase');
 var needle       = require('needle');
 var _            = require('lodash');
 var OAuth        = require('oauth');
-var request     = require('request');
+var request      = require('request');
 
 module.exports = function(app, config) {
 
@@ -17,13 +17,13 @@ module.exports = function(app, config) {
     config.uber.authorize_url,
     config.uber.access_token_url,
     config.uber.base_uber_url
-  )
+  );
 
   var parameters = {
     'response_type': 'code',
     'redirect_uri': config.uber.redirect_url,
     'scope': 'profile'
-  }
+  };
 
   app.route('/users').get(function(req, res) {
     var login_url = oauth2.getAuthorizeUrl(parameters);
@@ -43,7 +43,7 @@ module.exports = function(app, config) {
       'grant_type':   'authorization_code',
       client_id: config.uber.clientId,
       client_secret: config.uber.secretKey
-    }
+    };
 
     oauth2.getOAuthAccessToken(code, parameters, function(err, access_token, refresh_token, results) {
       if (err) {
@@ -73,9 +73,9 @@ module.exports = function(app, config) {
                 console.log('saved user');
                 resp.send({message: 'User created', response: data});
               }
-            })
+            });
           }
-         })
+         });
         }
       });
 
