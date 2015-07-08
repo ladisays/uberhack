@@ -10,12 +10,13 @@ module.exports = function(app, config) {
 
   requestsRef.on('child_added', function(snap) {
     if (snap.val()) {
-      console.log(snap.val());
+      console.log('ghjgjfgh', snap.val());
+      var value = snap.val();
+      _.find(value, function(key) {
+        var j = schedule.scheduleJob(key.date, function() {
+          console.log('The world is going to end today.');
+        });
+      });
     }
-  });
-
-  var date = new Date(2016, 12, 21, 5, 30, 0);
-  var j = schedule.scheduleJob(date, function() {
-    console.log('The world is going to end today.');
   });
 };
