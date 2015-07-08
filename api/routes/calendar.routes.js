@@ -81,12 +81,10 @@ module.exports = function(app, config) {
       var body = req.body.calendar;
       var JSONObj = JSON.parse(body);
       console.log(uid, 'string', body, "JSON", JSONObj);
-      root.child('users').child(uid).set(body, function(err, data) {
-        if (err) {
-          console.log(err);
-          return;
+      root.child('users').child(uid).set(body, function(err) {
+        if (!err) {
+          return res.json({response: 'Successfully saved calendar'});
         }
-        return data;
       });
     });
 };
