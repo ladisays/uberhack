@@ -110,7 +110,7 @@ gulp.task('keep-alive', function () {
       });
     }, 300000);
   }
-})
+});
 
 gulp.task('build', ['bower', 'jade', 'styles', 'browserify', 'static-files']);
 gulp.task('production', ['nodemon', 'build']);
