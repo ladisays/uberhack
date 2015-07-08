@@ -25,7 +25,7 @@ module.exports = function(app, config) {
     'scope': 'profile'
   };
 
-  app.route('/users').get(function(req, res) {
+  app.route('/login').get(function(req, res) {
     var login_url = oauth2.getAuthorizeUrl(parameters);
     console.log(login_url);
 
@@ -82,6 +82,4 @@ module.exports = function(app, config) {
     });
 
   });
-
-
 };
