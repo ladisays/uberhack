@@ -74,7 +74,6 @@ module.exports = function(app, config) {
 
   app.route('/products').get(function(req, res) {
     var getProducts = function() {
-      var access_token = '';
       var params = {
       	url: 'https://api.uber.com/v1/products?server_token=' + config.uber.server_token,
         qs: {
@@ -89,10 +88,40 @@ module.exports = function(app, config) {
         console.log('response', JSON.parse(response.body).products);
       });
     };
-
     getProducts();
   });
 
+  app.route('/getAccessToken').get(function(req, res){
+  	
+  	usersRef.on('child_added', function(snapshot) {
+  		var message = snapshot.val();
+  		console.log('message', message);
+  	});
+  });
+
+  var requestRide = function(accessToken){
+  	var params = {
+      url: 'https://sandbox-api.uber.com/v1/requests',
+      auth:  {'bearer': accessToken},
+      server_token: config.uber.server_token,
+      qs: {
+      	scope: 'request',
+      	product_id: '21141cb0-76f7-4638-b26a-3122f27ce90a',
+        start_latitude: 6.506911,
+	      start_longitude: 3.3840278,
+	      end_latitude: 6.613947,
+	      end_longitude: 3.358154
+      }
+     };
+     console.log('starting to make request');
+    request.post(params, function(err, response){
+     	if(err){
+     			console.log('err', err);
+     	  }
+     	  console.log('final response', response);
+     	  return response;
+    });
+  };
 
 
   app.route('/users/:id/requests').post(function(req, res) {
@@ -107,18 +136,14 @@ module.exports = function(app, config) {
           error: 'User not found!'
         });
       }
+
       request['uid'] = uid;
+      userDetails = snap.val();
+      var access_token = userDetails.accessToken;
       requestsRef.push(request, function(err) {
-        // var requestRideObject = {
-        // 	start_latitude: ,
-        //       start_longitude:,
-        //       end_latitude:,
-        //       end_longitude:,
-        // }
-
-
-        if (!err) {
-          // request.post('POST/v1/requests', );
+      
+      	if (!err) {
+          requestRide(access_token);
           //return res.json({response: request});
         }
         return res.json({
