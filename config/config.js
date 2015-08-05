@@ -16,7 +16,7 @@ var development = {
     scopes:              ["profile", "history_lite", "request"],
     base_uber_url:       "https://api.uber.com/v1/",
     base_uber_url_v1_1 : "https://api.uber.com/v1.1/",
-    redirect_url:        "https://andelahack.herokuapp.com/uber/callback",
+    redirect_url:        "http://localhost:5555/uber/callback",
     secretKey:           "57am6kbYes-z2AP09g2IiQExJsZeracb0WIiu1Js",
     server_token:        "WaxCkdTlaVFmB9Vf76q_buaTGqVad5ODrYX5S5h2"
   }
@@ -53,7 +53,8 @@ var production = {
     base_uber_url:       "https://api.uber.com/v1/",
     base_uber_url_v1_1 : "https://api.uber.com/v1.1/",
     redirect_url:        "https://andelahack.herokuapp.com/uber/callback",
-    secretKey:           "57am6kbYes-z2AP09g2IiQExJsZeracb0WIiu1Js"
+    secretKey:           "57am6kbYes-z2AP09g2IiQExJsZeracb0WIiu1Js",
+    server_token:        "WaxCkdTlaVFmB9Vf76q_buaTGqVad5ODrYX5S5h2"
   }
 };
 
