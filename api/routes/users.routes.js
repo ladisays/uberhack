@@ -22,7 +22,7 @@ module.exports = function(app, config) {
   var parameters = {
     'response_type': 'code',
     'redirect_uri': config.uber.redirect_url,
-    'scope': 'profile'
+    'scope': 'profile request request_receipt history history_lite'
   };
 
   app.route('/login').get(function(req, res) {
@@ -87,41 +87,4 @@ module.exports = function(app, config) {
       });
     });
   });
-
-  // app.route('/login/:access_token').get(function(req, resp) {
-  //   var access_token = req.params.access_token;
-
-  //   var url = 'https://api.uber.com/v1/me';
-  //   request.get(url, {
-  //     auth:  {'bearer': access_token},
-  //     json: true
-  //   }, function (err, res, data) {
-  //     if (err) {
-  //       console.log(err);
-  //     } else {
-  //      console.log('Response: ', data);
-  //      data.accessToken = access_token;
-  //      root.child('users').child(data.uuid).once('value', function (snap) {
-  //       if(snap.val()) {
-  //         console.log('User exists', snap.val());
-  //         root.child('users').child(data.uuid).update({accessToken: access_token}, function(err) {
-  //           if(!err) {
-  //             console.log('updated user');
-  //             return resp.send({message: 'User updated', response: data});
-  //           }
-  //         });
-  //         // return resp.send({message: 'User found', response: data});
-  //       }
-  //       else {
-  //         root.child('users').child(data.uuid).set(data, function(err) {
-  //           if(!err) {
-  //             console.log('saved user');
-  //             return resp.send({message: 'User created', response: data});
-  //           }
-  //         });
-  //       }
-  //      });
-  //     }
-  //   });
-  // })
 };
