@@ -74,22 +74,15 @@ module.exports = function(app, config) {
                 if (err) {
                     console.log('err', err);
                 }
-                console.log('response', JSON.parse(response.body).products);
+                else{
+                res.json({response: JSON.parse(response.body).products});
+              	}
             });
         };
         getProducts();
     });
 
-    app.route('/getAccessToken').get(function(req, res) {
-
-        usersRef.on('child_added', function(snapshot) {
-            var message = snapshot.val();
-            console.log('message', message);
-        });
-    });
-
-
-    app.route('/users/:id/requests').post(function(req, res) {
+    app.route('/users/:id/request').post(function(req, res) {
         var uid = req.params.id,
             requestBody = req.body;
 
@@ -106,39 +99,89 @@ module.exports = function(app, config) {
             userDetails = snap.val();
             var access_token = userDetails.accessToken;
             requestsRef.push(requestBody, function(err) {
-
                 if (!err) {
                     var params = {
-                      url: 'https://sandbox-api.uber.com/v1/requests',
-                      headers: {
-                          'Authorization': 'Bearer ' + access_token,
-                          'Content-Type': 'application/json'
-                      },
-                      // server_token: config.uber.server_token,
-                      // scope: 'request',
-                      body: JSON.stringify({
-                          start_latitude: 6.506911,
-                          start_longitude: 3.3840278,
-                          end_latitude: 6.613947,
-                          end_longitude: 3.358154,
-                          product_id: '21141cb0-76f7-4638-b26a-3122f27ce90a'
-                      })
+                        url: 'https://api.uber.com/v1/requests/estimate',
+                        headers: {
+                            'Authorization': 'Bearer ' + access_token,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            start_latitude: 6.506911,
+                            start_longitude: 3.3840278,
+                            end_latitude: 6.613947,
+                            end_longitude: 3.358154,
+                            product_id: '21141cb0-76f7-4638-b26a-3122f27ce90a'
+                        })
                     };
-                    console.log('starting to make request');
                     request.post(params, function(err, response) {
                         if (err) {
                             console.log('err', err);
                         } else {
-                        	res.json({ response: response.body });
-	                      }
+                            res.json({
+                                response: JSON.parse(response.body)
+                            });
+                        }
                     });
-                    // return res.json({response: request});
                 } else {
-	                return res.json({
-	                    error: 'Unable to create request',
-	                    realError: err
-	                });
-              	}
+                    return res.json({
+                        error: 'Unable to create request',
+                        realError: err
+                    });
+                }
+            });
+        });
+    });
+
+    app.route('/users/:id/requests/:requestId').post(function(req, res) {
+        var uid = req.params.id,
+            requestUid = req.params.requestId;
+
+
+        requestsRef.child(requestUid).once('value', function(snapshot) {
+
+            requestData = snapshot.val();
+
+
+
+            usersRef.child(uid).once('value', function(snap) {
+                if (snap.val()) {
+                    // If the user doesn't exist, return an error message
+
+                    userDetails = snap.val();
+                    var access_token = userDetails.accessToken;
+                    var params = {
+                        url: 'https://sandbox-api.uber.com/v1/requests',
+                        headers: {
+                            'Authorization': 'Bearer ' + access_token,
+                            'Content-Type': 'application/json'
+                        },
+                        // body: JSON.stringify({
+                        //     start_latitude: requestData.start_latitude,
+                        //     start_longitude: requestData.start_longitude,
+                        //     end_latitude: requestData.end_latitude,
+                        //     end_longitude: requestData.end_longitude,
+                        //     product_id: '21141cb0-76f7-4638-b26a-3122f27ce90a'
+                        // })
+                        body: JSON.stringify({
+                            start_latitude: 6.506911,
+                            start_longitude: 3.3840278,
+                            end_latitude: 6.613947,
+                            end_longitude: 3.358154,
+                            product_id: '21141cb0-76f7-4638-b26a-3122f27ce90a'
+                        })
+                    };
+                    request.post(params, function(err, response) {
+                        if (err) {
+                            console.log('err', err);
+                        } else {
+                            res.json({
+                                response: response.body
+                            });
+                        }
+                    });
+
+                }
             });
         });
     });
