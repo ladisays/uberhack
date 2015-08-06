@@ -9,18 +9,7 @@ var request = require('request');
 module.exports = function(app, config) {
     var root = new Firebase(config.firebase.rootRefUrl);
     var requestsRef = root.child('requests'),
-        usersRef = root.child('users'),
-        OAuth2 = OAuth.OAuth2,
-
-        oauth2 = new OAuth2(
-            config.uber.clientId,
-            config.uber.secretKey,
-            "",
-            config.uber.authorize_url,
-            config.uber.access_token_url,
-            config.uber.base_uber_url
-        );
-
+        usersRef = root.child('users');
 
     app.route('/users/:id/requests').get(function(req, res) {
         var uid = req.params.id;
