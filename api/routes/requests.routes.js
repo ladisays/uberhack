@@ -61,30 +61,44 @@ module.exports = function(app, config) {
         });
     };
 
-    app.route('/products').get(function(req, res) {
-        var getProducts = function() {
-            var params = {
-                url: 'https://api.uber.com/v1/products?server_token=' + config.uber.server_token,
-                qs: {
-                    latitude: 6.506911,
-                    longitude: 3.3840278
-                }
-            };
-            request.get(params, function(err, response) {
-                if (err) {
-                    console.log('err', err);
-                }
-                else{
-                res.json({response: JSON.parse(response.body).products});
-              	}
-            });
+    var getProducts = function(latitude, longitude, options) {
+        var params = {
+            url: 'https://api.uber.com/v1/products?server_token=' + config.uber.server_token,
+            qs: {
+                latitude: latitude,
+                longitude: longitude
+            }
         };
-        getProducts();
-    });
+        request.get(params, function(err, response) {
+            if (err) {
+                console.log('err', err);
+            }
+            else{
+                var productResponse = res.json({response: JSON.parse(response.body).products});
+
+                _.forEach(options, function() {
+                    _.forEach(productResponse, function () {
+                        var displayName = productResponse.display_name
+                        if (displayName === options) {
+                            return productResponse;
+                        }
+                    })
+                })
+          	}
+        });
+    };
 
     app.route('/users/:id/request').post(function(req, res) {
         var uid = req.params.id,
             requestBody = req.body;
+
+        var latitude        = req.body.location.latitude;
+        var longitude       = req.body.location.longitude;
+        var address         = req.body.location.address;
+        var destination     = req.body.destination;
+        var startTime       = req.body.pickUpTime;
+        var currentTime     = req.body.requestTime;
+        var options         = req.body.uberType;
 
         // create a new request for a user
         usersRef.child(uid).once('value', function(snap) {
@@ -93,43 +107,46 @@ module.exports = function(app, config) {
                 return res.json({
                     error: 'User not found!'
                 });
-            }
 
-            requestBody['uid'] = uid;
-            userDetails = snap.val();
-            var access_token = userDetails.accessToken;
-            requestsRef.push(requestBody, function(err) {
-                if (!err) {
-                    var params = {
-                        url: 'https://api.uber.com/v1/requests/estimate',
-                        headers: {
-                            'Authorization': 'Bearer ' + access_token,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            start_latitude: 6.506911,
-                            start_longitude: 3.3840278,
-                            end_latitude: 6.613947,
-                            end_longitude: 3.358154,
-                            product_id: '21141cb0-76f7-4638-b26a-3122f27ce90a'
-                        })
-                    };
-                    request.post(params, function(err, response) {
-                        if (err) {
-                            console.log('err', err);
-                        } else {
-                            res.json({
-                                response: JSON.parse(response.body)
-                            });
-                        }
-                    });
-                } else {
-                    return res.json({
-                        error: 'Unable to create request',
-                        realError: err
-                    });
-                }
-            });
+            } else {
+
+                requestBody['uid'] = uid;
+                userDetails = snap.val();
+                var access_token = userDetails.accessToken;
+                requestsRef.push(requestBody, function(err) {
+                    if (!err) {
+                        var availableProduct = getProducts(latitude, longitude, options);
+
+                        var params = {
+                            url: 'https://api.uber.com/v1/requests/estimate',
+                            headers: {
+                                'Authorization': 'Bearer ' + access_token,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                start_latitude: latitude,
+                                start_longitude: longitude,
+                                product_id: availableProduct.product_id;
+                            })
+                        };
+                        request.post(params, function(err, response) {
+                            if (err) {
+                                console.log('err', err);
+                            } else {
+
+                                res.json({
+                                    response: JSON.parse(response.body)
+                                });
+                            }
+                        });
+                    } else {
+                        return res.json({
+                            error: 'Unable to create request',
+                            realError: err
+                        });
+                    }
+                });
+            }
         });
     });
 
