@@ -54,13 +54,6 @@ module.exports = function(app, config) {
 
     });
 
-    var getLocationCoordinates = function() {
-
-        geocoder.geocode("2/4 Funsho Street, Yaba Lagos", function(err, data) {
-            var geo = data.results[0].geometry.location;
-        });
-    };
-
     var getProducts = function(latitude, longitude, options) {
         var params = {
             url: 'https://api.uber.com/v1/products?server_token=' + config.uber.server_token,
@@ -72,19 +65,20 @@ module.exports = function(app, config) {
         request.get(params, function(err, response) {
             if (err) {
                 console.log('err', err);
-            }
-            else{
-                var productResponse = res.json({response: JSON.parse(response.body).products});
+            } else {
+                var productResponse = res.json({
+                    response: JSON.parse(response.body).products
+                });
 
                 _.forEach(options, function() {
-                    _.forEach(productResponse, function () {
+                    _.forEach(productResponse, function() {
                         var displayName = productResponse.display_name
                         if (displayName === options) {
                             return productResponse;
                         }
                     })
                 })
-          	}
+            }
         });
     };
 
@@ -92,13 +86,13 @@ module.exports = function(app, config) {
         var uid = req.params.id,
             requestBody = req.body;
 
-        var latitude        = req.body.location.latitude;
-        var longitude       = req.body.location.longitude;
-        var address         = req.body.location.address;
-        var destination     = req.body.destination;
-        var startTime       = req.body.pickUpTime;
-        var currentTime     = req.body.requestTime;
-        var options         = req.body.uberType;
+        var latitude = req.body.location.latitude;
+        var longitude = req.body.location.longitude;
+        var address = req.body.location.address;
+        var destination = req.body.destination;
+        var startTime = req.body.pickUpTime;
+        var currentTime = req.body.requestTime;
+        var options = req.body.uberType;
 
         // create a new request for a user
         usersRef.child(uid).once('value', function(snap) {
@@ -126,7 +120,7 @@ module.exports = function(app, config) {
                             body: JSON.stringify({
                                 start_latitude: latitude,
                                 start_longitude: longitude,
-                                product_id: availableProduct.product_id;
+                                product_id: availableProduct.product_id
                             })
                         };
                         request.post(params, function(err, response) {
@@ -139,6 +133,7 @@ module.exports = function(app, config) {
                                 });
                             }
                         });
+
                     } else {
                         return res.json({
                             error: 'Unable to create request',
@@ -150,55 +145,59 @@ module.exports = function(app, config) {
         });
     });
 
-    app.route('/users/:id/requests/:requestId').post(function(req, res) {
+
+    app.route('/users/:id/requests').post(function(req, res) {
         var uid = req.params.id,
+            end_latitude, end_longitude,
             requestUid = req.params.requestId;
 
 
         requestsRef.child(requestUid).once('value', function(snapshot) {
-
+        		var availableProduct = getProducts(latitude, longitude, options);
             requestData = snapshot.val();
+            var destination = requestData.destination;
+           
 
+            geocoder.geocode(destination, function(err, data) {
+                var geo = data.results[0].geometry.location;
 
+                end_latitude = geo.lat;
+                end_longitude = geo.lng;
+                var start_latitude = requestData.location.latitude;
+        				var start_longitude = requestData.location.longitude;
 
-            usersRef.child(uid).once('value', function(snap) {
-                if (snap.val()) {
-                    // If the user doesn't exist, return an error message
+                usersRef.child(uid).once('value', function(snap) {
+                    if (snap.val()) {
+                        // If the user doesn't exist, return an error message
 
-                    userDetails = snap.val();
-                    var access_token = userDetails.accessToken;
-                    var params = {
-                        url: 'https://sandbox-api.uber.com/v1/requests',
-                        headers: {
-                            'Authorization': 'Bearer ' + access_token,
-                            'Content-Type': 'application/json'
-                        },
-                        // body: JSON.stringify({
-                        //     start_latitude: requestData.start_latitude,
-                        //     start_longitude: requestData.start_longitude,
-                        //     end_latitude: requestData.end_latitude,
-                        //     end_longitude: requestData.end_longitude,
-                        //     product_id: '21141cb0-76f7-4638-b26a-3122f27ce90a'
-                        // })
-                        body: JSON.stringify({
-                            start_latitude: 6.506911,
-                            start_longitude: 3.3840278,
-                            end_latitude: 6.613947,
-                            end_longitude: 3.358154,
-                            product_id: '21141cb0-76f7-4638-b26a-3122f27ce90a'
-                        })
-                    };
-                    request.post(params, function(err, response) {
-                        if (err) {
-                            console.log('err', err);
-                        } else {
-                            res.json({
-                                response: response.body
-                            });
-                        }
-                    });
+                        userDetails = snap.val();
+                        var access_token = userDetails.accessToken;
+                        var params = {
+                            url: 'https://sandbox-api.uber.com/v1/requests',
+                            headers: {
+                                'Authorization': 'Bearer ' + access_token,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                start_latitude: start_latitude,
+                                start_longitude: start_longitude,
+                                end_latitude: end_latitude,
+                                end_longitude: end_longitude,
+                                product_id: availableProduct.product_id
+                            })
+                        };
+                        request.post(params, function(err, response) {
+                            if (err) {
+                                console.log('err', err);
+                            } else {
+                                res.json({
+                                    response: response.body
+                                });
+                            }
+                        });
 
-                }
+                    }
+                });
             });
         });
     });
