@@ -64,10 +64,15 @@ module.exports = function(app, config) {
         } else {
          console.log('Response: ', data);
          data.accessToken = access_token;
+
          root.child('users').child(data.uuid).once('value', function (snap) {
           if(snap.val()) {
-            console.log('User exists');
-            return resp.send({message: 'User found', response: data});
+            console.log('User exists', snap.val());
+            root.child('users').child(data.uuid).update({accessToken: access_token, promo_code: data.promo_code}, function(err) {
+              if(!err) {
+                return resp.send({message: 'User updated', response: data});
+              }
+            });
           }
           else {
             root.child('users').child(data.uuid).set(data, function(err) {
@@ -83,8 +88,8 @@ module.exports = function(app, config) {
     });
   });
 
-  app.route('/login/:access_token').get(function(req, resp) {
-    var access_token = req.params.access_token;
+  app.route('/login').post(function(req, resp) {
+    var access_token = req.body.access_token;
 
     var url = 'https://api.uber.com/v1/me';
     request.get(url, {
@@ -98,8 +103,12 @@ module.exports = function(app, config) {
        data.accessToken = access_token;
        root.child('users').child(data.uuid).once('value', function (snap) {
         if(snap.val()) {
-          console.log('User exists');
-          return resp.send({message: 'User found', response: data});
+          console.log('User exists', snap.val());
+          root.child('users').child(data.uuid).update({accessToken: access_token, promo_code: data.promo_code}, function(err) {
+            if(!err) {
+              return resp.send({message: 'User updated', response: data});
+            }
+          });
         }
         else {
           root.child('users').child(data.uuid).set(data, function(err) {
