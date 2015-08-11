@@ -88,9 +88,9 @@ module.exports = function(app, config) {
       });
     });
 
-  app.route('/calendar/:access_token')
+  app.route('/calendar')
     .post(function(req, res) {
-      var access_token = req.params.access_token;
+      var access_token = req.body.access_token;
       var calendar = google.calendar('v3');
       calendar.events.list({
         calendarId: 'primary',
