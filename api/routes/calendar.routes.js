@@ -20,6 +20,7 @@ module.exports = function(app, config) {
         res.redirect(url);
       } else {
         var calendar = google.calendar('v3');
+        console.log("ouath client", oAuthClient);
         calendar.events.list({
           calendarId: 'primary',
           maxResults: 10,
@@ -63,11 +64,8 @@ module.exports = function(app, config) {
       var code = req.query.code;
       oAuthClient.getToken(code, function(err, tokens) {
         if (err) {
-          console.log('Error authenticating');
-          console.log(err);
+          console.log('Error authenticating', err);
         } else {
-          console.log('Successfully authenticated');
-          console.log(tokens);
           oAuthClient.setCredentials(tokens);
           authed = true;
           res.redirect('/calendar');
@@ -83,49 +81,64 @@ module.exports = function(app, config) {
       console.log(uid, 'string', body, "JSON", JSONObj);
       root.child('users').child(uid).set(body, function(err) {
         if (!err) {
-          return res.json({response: 'Successfully saved calendar'});
+          return res.json({
+            response: 'Successfully saved calendar'
+          });
         }
       });
     });
 
-  app.route('/calendar')
+  app.route('/custom-calendar')
     .post(function(req, res) {
-      var access_token = req.body.access_token;
-      var calendar = google.calendar('v3');
-      calendar.events.list({
-        calendarId: 'primary',
-        maxResults: 10,
-        timeMin: (new Date()).toISOString(),
-        singleEvents: true,
-        orderBy: 'startTime',
-        auth: access_token
-      }, function(err, response) {
+      var code = req.query.code;
+      oAuthClient.getToken(code, function(err, tokens) {
+        console.log(tokens);
         if (err) {
-          console.log('The API returned an error: ' + err);
-          return;
-        }
-        var events = response.items;
-        if (events.length === 0) {
-          console.log('No upcoming events found.');
-          return res.json({
-            err: 'No upcoming events found.'
-          });
+          console.log('Error authenticating', err);
         } else {
-          console.log('Upcoming 10 events: ', events);
-          var selectedEvents = [];
-          for (var i = 0; i < events.length; i++) {
-            var event = events[i],
-              eventDetails = {};
-            eventDetails.start = event.start.dateTime || event.start.date;
-            eventDetails.end = event.end.dateTime || event.end.date;
-            eventDetails.status = event.status;
-            eventDetails.location = event.location;
-            eventDetails.organiser = event.organiser;
-            eventDetails.summary = event.summary;
-            selectedEvents.push(eventDetails);
-          }
-          return res.json(selectedEvents);
+          console.log('Successfully authenticated', tokens);
+          oAuthClient.setCredentials(tokens);
+          getEvents(oAuthClient);
         }
       });
+
+      function getEvents(oAuthClient) {
+        var calendar = google.calendar('v3');
+        calendar.events.list({
+          calendarId: 'primary',
+          maxResults: 10,
+          timeMin: (new Date()).toISOString(),
+          singleEvents: true,
+          orderBy: 'startTime',
+          auth: oAuthClient
+        }, function(err, response) {
+          if (err) {
+            console.log('The API returned an error: ' + err);
+            return;
+          }
+          var events = response.items;
+          if (events.length === 0) {
+            console.log('No upcoming events found.');
+            return res.json({
+              err: 'No upcoming events found.'
+            });
+          } else {
+            console.log('Upcoming 10 events: ', events);
+            var selectedEvents = [];
+            for (var i = 0; i < events.length; i++) {
+              var event = events[i],
+                eventDetails = {};
+              eventDetails.start = event.start.dateTime || event.start.date;
+              eventDetails.end = event.end.dateTime || event.end.date;
+              eventDetails.status = event.status;
+              eventDetails.location = event.location;
+              eventDetails.organiser = event.organiser;
+              eventDetails.summary = event.summary;
+              selectedEvents.push(eventDetails);
+            }
+            return res.json(selectedEvents);
+          }
+        });
+      }
     });
 };
