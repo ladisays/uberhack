@@ -148,8 +148,8 @@ module.exports = function(app, config) {
     for (i = 0; i < data.length; i++) {
       eventDetails = {};
       if (data[i].start && data[i].end && data[i].location && data[i].summary) {
-        eventDetails.start      = data[i].start;
-        eventDetails.end        = data[i].end;
+        eventDetails.start      = data[i].start.dateTime;
+        eventDetails.end        = data[i].end.dateTime;
         eventDetails.status     = data[i].status;
         eventDetails.location   = data[i].location;
         eventDetails.summary    = data[i].summary;
@@ -166,7 +166,7 @@ module.exports = function(app, config) {
         tomorrow = moment().add(1, 'days').utc().format();
 
     for (i in data) {
-      var time = moment(data[i].start.dateTime);
+      var time = moment(data[i].start);
 
       if (time.isBetween(now, tomorrow)) {
         arr.push(data[i]);
