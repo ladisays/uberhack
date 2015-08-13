@@ -23,6 +23,7 @@ module.exports = function (app, config) {
 					for (id in requests) {
 						if (requests[id].uid === uid) {
 							// if user has requests available, push them into an array
+							requests[id].id = id;
 							userRequests.push(requests[id]);
 						}
 					}
