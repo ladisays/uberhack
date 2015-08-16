@@ -64,13 +64,13 @@ module.exports = function (app, config) {
 		});
 	});
 
-	app.route('/users/:id/requests').delete(function (req, res) {
-		var uid	= req.params.id,
-				id	= req.body.id;
-		console.log(uid, id);
+	app.route('/users/:uuid/requests/:id').delete(function (req, res) {
+		var uuid	= req.params.uuid,
+				id	= req.params.id;
+		console.log(uuid, id);
 
 		// delete an existing request
-		usersRef.child(uid).once('value', function (snap) {
+		usersRef.child(uuid).once('value', function (snap) {
 			if (!snap.val()) {
 				// If the user doesn't exist, return an error message
 				return res.json({error: 'User not found!'});
