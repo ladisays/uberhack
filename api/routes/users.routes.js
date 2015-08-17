@@ -22,7 +22,7 @@ module.exports = function(app, config) {
   var parameters = {
     'response_type': 'code',
     'redirect_uri': config.uber.redirect_url,
-    'scope': config.uber.scopes
+    'scope': 'profile request request_receipt history history_lite'
   };
 
   app.route('/login').get(function(req, res) {
