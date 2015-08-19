@@ -74,6 +74,8 @@ module.exports = function(app, config) {
 
     if (!data.location.latitude) { res.sendStatus(400).json({ error: 'No latitude provided!' }); }
 
+    console.log(data);
+
     usersRef.child(uid).once('value', function (snap) {
     	if (!snap.val()) { res.sendStatus(400).json({ error: 'User does not exist!' }); }
 
