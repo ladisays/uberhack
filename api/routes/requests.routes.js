@@ -4,6 +4,7 @@ var _ = require('lodash');
 var OAuth = require('oauth');
 var geocoder = require('geocoder');
 var request = require('request');
+var moment = require('moment');
 
 
 module.exports = function(app, config) {
@@ -18,7 +19,7 @@ module.exports = function(app, config) {
     usersRef.child(uid).once('value', function(snap) {
       if (!snap.val()) {
         // If the user doesn't exist, return an error message
-        return res.json({ error: 'User not found!' });
+        return res.sendStatus(400).json({ error: 'User not found!' });
       }
       // retrieve all requests
       requestsRef.once('value', function(snap) {
@@ -37,13 +38,13 @@ module.exports = function(app, config) {
             });
           } else {
             // if user has no requests, return an error message
-            return res.json({
+            return res.sendStatus(400).json({
               error: 'This user has no requests!'
             });
           }
         } else {
           // if there are no requests, return an error message
-          return res.json({
+          return res.sendStatus(400).json({
             error: 'There are no requests!'
           });
         }
@@ -53,78 +54,116 @@ module.exports = function(app, config) {
   });
 
   app.route('/users/:id/requests').post(function(req, res) {
-    var uid = req.params.id,
+    var user, params, product, products, destination,
+    		uid = req.params.id,
     		data = req.body;
 
-    usersRef.child(uid).once('value', function (snap) {
-    	if (!snap.val()) {
-    		res.json({ error: 'User not found!' });
-    	}
-    	console.log('Checking firebase...', data);
+    if (!data) { res.sendStatus(400).json({ error: 'Invalid request!' }); }
 
-    	var user = snap.val();
-    	var params = {
+    if (!data.destination) { res.sendStatus(400).json({ error: 'No destination address!' }); }
+
+    if (!data.startTime) { res.sendStatus(400).json({ error: 'No Start Time!' }); }
+
+    if (!data.productType) { res.sendStatus(400).json({ error: 'No Uber product was found!' }); }
+
+    if (!data.location) { res.sendStatus(400).json({ error: 'No location details!' }); }
+
+    if (typeof(data.location === "string")) { data.location = JSON.parse(data.location); }
+
+    if (!data.location.longitude) { res.sendStatus(400).json({ error: 'No longitude provided!' }); }
+
+    if (!data.location.latitude) { res.sendStatus(400).json({ error: 'No latitude provided!' }); }
+
+    usersRef.child(uid).once('value', function (snap) {
+    	if (!snap.val()) { res.sendStatus(400).json({ error: 'User does not exist!' }); }
+
+    	data.uid = uid;
+
+    	user = snap.val();
+    	params = {
 	      url: 'https://api.uber.com/v1/products',
 	      qs: {
 	      	server_token: config.uber.server_token,
-	        latitude: data.location.lat,
-	        longitude: data.location.lng
+	        latitude: data.location.latitude,
+	        longitude: data.location.longitude
 	      }
 	    };
 
 	    request.get(params, function (err, response, body) {
-	      if (err) {
-	        res.json({ error: err });
-	      }
-	      body = JSON.parse(body);
-	      console.log('\nGetting product from Uber API...', body);
+	      if (err) { res.sendStatus(400).json({ error: err }); }
 
-	      var product, products = body.products;
+	      body = JSON.parse(body);
+	      products = body.products;
 
 	      for (i in  products) {
 	      	if (products[i].display_name == data.productType) {
-	      		// console.log(products[i]);
 	      		product = products[i];
 	      	}
 	      }
 
-	      data.product_id = product.product_id;
+	      data.product = {
+	      	id: product.product_id,
+	      	type: data.productType
+	      };
+
+	      delete data['productType'];
 
 	      params.url = 'https://andelahack.herokuapp.com/location';
 	      params.qs = { street: data.destination };
 
 	      request.get(params, function (err, response, body) {
-	      	if (err) {
-	      		return { error: err };
-	      	}
+	      	if (err) { res.sendStatus(400).json({ error: err }); }
 
 	      	body = JSON.parse(body);
-					console.log('\nGetting location coordinates from backend...', body);
+	      	destination = data.destination;
 
-					params.url = 'https://sandbox-api.uber.com/v1/requests/estimates';
+					data.destination = {
+						address: destination,
+						latitude: body.response.lat,
+						longitude: body.response.lng
+					};
+
+					params.url = 'https://sandbox-api.uber.com/v1/requests/estimate';
 					params.headers = {
 						'Authorization': 'Bearer ' + user.accessToken,
 						'Content-Type': 'application/json'
 					};
+
 					params.body = JSON.stringify({
-						start_latitude		: data.location.lat,
-						start_longitude		: data.location.lng,
-						end_latitude			: body.response.lat,
-						end_longitude			: body.response.lng,
-						product_id				: data.product_id
+						start_latitude		: data.location.latitude,
+						start_longitude		: data.location.longitude,
+						end_latitude			: data.destination.latitude,
+						end_longitude			: data.destination.longitude,
+						product_id				: data.product.id
 					});
+
 					params.qs = {};
 
 		  		request.post(params, function (err, response, body)  {
-		  			if (err) {
-		  				res.json({ error: err });
-		  			}
-		  			console.log('\nGetting estimates from Uber API...');
-		  			console.log(response.statusCode);
+		  			if (err) { res.sendStatus(400).json({ error: err }); }
 
 		  			body = JSON.parse(body);
-		  			console.log(body);
-		  			res.json({ response: body });
+		  			var duration_estimate = body.trip.duration_estimate,
+		  					pickup_estimate = body.pickup_estimate,
+		  					time = moment(data.startTime).subtract(15, 'minutes').format(),
+		  					reminder = moment(time).subtract(duration_estimate, 'seconds').format();
+
+		  			data.estimates = {
+		  				duration: duration_estimate,
+		  				reminder: reminder
+		  			};
+
+		  			data.created = moment().format();
+
+						requestsRef.push(data, function (err) {
+							if (!err) {
+								console.log('\n\nPushing to firebase...', data);
+								res.json({ response: data });
+							}
+							else {
+								res.sendStatus(400).json({ message: 'Unable to save data to firebase!', error: err });
+							}
+						});
 		  		});
 		  	});
 	    });
