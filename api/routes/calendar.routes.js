@@ -131,6 +131,7 @@ module.exports = function(app, config) {
     .post(function (req, res) {
       var data, uid = req.params.uid;
       var calendar = req.body.calendar || JSON.parse(req.body).calendar;
+      console.log(calendar);
 
       calendarRef.child(uid).once('value', function (snap) {
         if (snap.val()) {
