@@ -15,7 +15,6 @@ module.exports = function(app, config) {
 
   app.route('/calendar')
     .get(function(req, res) {
-      console.log(req.query, req.params);
       var uid = req.params.uid;
 
       if (!authed) {
@@ -54,7 +53,7 @@ module.exports = function(app, config) {
       var uid = req.params.uid;
       var tokens = {
         accessToken: req.body.accessToken,
-        refreshToken: req.body.refreshToken
+        refreshToken: req.body.refreshToken || null
       };
 
       calendarRef.child(uid).once('value', function (snap) {
@@ -123,8 +122,26 @@ module.exports = function(app, config) {
           console.log('Error authenticating', err);
         } else {
           oAuthClient.setCredentials(tokens);
+          console.log(tokens);
           authed = true;
-          res.redirect('/calendar');
+          // res.redirect('/calendar');
+          var params = { 
+            url: 'https://andelahack.herokuapp.com/' + uid + '/calendar',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              accessToken: tokens.access_token,
+              refreshToken: tokens.refresh_token
+            })
+          };
+
+          request.post(params, function (err, response, body) {
+            if (err) {
+              res.sendStatus(400).json({ error: err});
+            }
+
+            body = body.response || JSON.parse(body).response;
+            res.json({ response: body });
+          });
         }
       });
     });
