@@ -42,8 +42,8 @@ module.exports = function(app, config) {
             return;
           }
 
-          var events = buildEventsObject(response.items);       
-          return res.json(events);
+          // var events = buildEventsObject(response.items);       
+          return res.json(response);
         });
       }
     });
@@ -129,14 +129,26 @@ module.exports = function(app, config) {
 
   app.route('/user/:uid/calendar')
     .post(function (req, res) {
-      var uid = req.params.uid;
-      var body = req.body.calendar;
-      var JSONObj = JSON.parse(body);
+      var data, uid = req.params.uid;
+      var calendar = req.body.calendar || JSON.parse(req.body).calendar;
 
-      root.child('users').child(uid).set(body, function(err) {
-        if (!err) {
-          return res.json({
-            response: 'Successfully saved calendar'
+      calendarRef.child(uid).once('value', function (snap) {
+        if (snap.val()) {
+          console.log('User already has a calendar');
+          data = snap.val();
+          data = shortList(data.items);
+
+          res.json({ response: data });
+        } else {
+          data = {};
+          data.items = buildEventsObject(calendar.items);
+
+          calendarRef.child(uid).set(data, function (err) {
+            if (!err) {
+              data = shortList(data.items);
+              
+              res.json({ response: data });
+            }
           });
         }
       });
@@ -163,7 +175,7 @@ module.exports = function(app, config) {
   function shortList(data) {
     var i, arr = [],
         now = moment.utc().format(),
-        tomorrow = moment().add(1, 'days').utc().format();
+        tomorrow = moment().add(2, 'days').utc().format();
 
     for (i in data) {
       var time = moment(data[i].start);
