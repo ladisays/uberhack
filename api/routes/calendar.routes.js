@@ -42,8 +42,8 @@ module.exports = function(app, config) {
             return;
           }
 
-          // var events = buildEventsObject(response.items);       
-          return res.json(response);
+          var events = buildEventsObject(response.items);       
+          return res.json(events);
         });
       }
     });
