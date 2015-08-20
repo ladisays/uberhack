@@ -32,7 +32,7 @@ module.exports = function(app, config) {
         calendar.events.list({
           calendarId: 'primary',
           timeMin: moment.utc().format(),
-          timeMax: moment().add(1, 'days').utc().format(),
+          // timeMax: moment().add(1, 'days').utc().format(),
           singleEvents: true,
           orderBy: 'startTime',
           auth: oAuthClient
@@ -42,8 +42,8 @@ module.exports = function(app, config) {
             return;
           }
 
-          var events = buildEventsObject(response.items);       
-          return res.json(events);
+          // var events = buildEventsObject(response.items);       
+          return res.json(response);
         });
       }
     });
