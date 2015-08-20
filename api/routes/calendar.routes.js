@@ -15,6 +15,7 @@ module.exports = function(app, config) {
 
   app.route('/calendar')
     .get(function(req, res) {
+      console.log(req.query, req.params);
       var uid = req.params.uid;
 
       if (!authed) {
@@ -115,7 +116,8 @@ module.exports = function(app, config) {
   app.route('/calendar/callback')
     .get(function (req, res) {
       var code = req.query.code;
-      console.log(code);
+      var uid = req.query.state;
+      console.log('\nCode, UID ------------------ ', code, uid);
       oAuthClient.getToken(code, function(err, tokens) {
         if (err) {
           console.log('Error authenticating', err);
