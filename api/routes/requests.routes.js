@@ -10,7 +10,8 @@ var moment = require('moment');
 module.exports = function(app, config) {
   var root = new Firebase(config.firebase.rootRefUrl);
   var requestsRef = root.child('requests'),
-      usersRef = root.child('users');
+      usersRef = root.child('users'),
+      tripsRef = root.child('trips');
 
   app.route('/users/:id/requests').get(function(req, res) {
     var uid = req.params.id;
@@ -95,6 +96,7 @@ module.exports = function(app, config) {
 	      if (err) { res.sendStatus(400).json({ error: err }); }
 
 	      body = JSON.parse(body);
+	      console.log(body);
 	      products = body.products;
 
 	      for (i in  products) {

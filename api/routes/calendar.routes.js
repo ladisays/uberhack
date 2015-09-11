@@ -84,6 +84,11 @@ module.exports = function(app, config) {
             
             var data = {};
             data.items = buildEventsObject(body.items);
+
+            if (!data.items) {
+              return res.sendStatus(400).json({ error: 'Insufficient calendar details!' });
+            }
+
             data.tokens = tokens;
             calendarRef.child(uid).set(data, function (err) {
               if (!err) {
@@ -186,6 +191,9 @@ module.exports = function(app, config) {
         eventDetails.location   = data[i].location;
         eventDetails.summary    = data[i].summary;
         events.push(eventDetails);
+      }
+      else {
+        return false;
       }
     }
 
