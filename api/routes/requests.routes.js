@@ -136,7 +136,7 @@ module.exports = function(app, config) {
 		      geocoder.geocode(data.destination, function (err, address) {
 		      	if (err) { res.sendStatus(400).json({ error: 'Unable to calculate co-ordinates for your destination address!' }); }
 
-		      	if (!coords.results[0].formatted_address || (!coords.results[0].geometry.location.lat && !coords.results[0].geometry.location.lng)) {
+		      	if (!address.results[0].formatted_address || (!address.results[0].geometry.location.lat && !address.results[0].geometry.location.lng)) {
 		      		return res.sendStatus(400).json({ error: 'Invalid destination address!' });
 		      	}
 
