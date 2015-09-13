@@ -61,6 +61,8 @@ module.exports = function(app, config) {
     		uid = req.params.id,
     		data = req.body;
 
+    console.log(data);
+
     if (!data) { res.sendStatus(400).json({ error: 'Invalid request!' }); }
 
     if (!data.destination) { res.sendStatus(400).json({ error: 'No destination address!' }); }
@@ -71,7 +73,7 @@ module.exports = function(app, config) {
 
     if (!data.location) { res.sendStatus(400).json({ error: 'No location details!' }); }
 
-    if (typeof(data.location) === "string") { data.location = JSON.parse(data.location); }
+    data.location = JSON.parse(data.location) ? JSON.parse(data.location) : data.location;
 
     if (data.location.address) {
     	geocoder.geocode(data.location.address, function (err, coords) {
