@@ -73,7 +73,7 @@ module.exports = function(app, config) {
 
     if (!data.location) { res.sendStatus(400).json({ error: 'No location details!' }); }
 
-    data.location = JSON.parse(data.location) ? JSON.parse(data.location) : data.location;
+    if (typeof data.location === 'string') { data.location = JSON.parse(data.location); }
 
     if (data.location.address) {
     	geocoder.geocode(data.location.address, function (err, coords) {
