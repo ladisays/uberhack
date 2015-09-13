@@ -3,7 +3,8 @@ var users     = require('./users.routes'),
     requests  = require('./requests.routes'),
     shared    = require('./shared.routes'),
     keepalive = require('./keep-alive.routes'),
-    location  = require('./location.routes');
+    location  = require('./location.routes'),
+    trips     = require('./trips.routes');
 
 module.exports = function(app, config) {
   users(app, config);
@@ -12,4 +13,5 @@ module.exports = function(app, config) {
   shared(app, config);
   keepalive(app, config);
   location(app, config);
+  trips(app, config);
 };

@@ -13,41 +13,6 @@ module.exports = function(app, config) {
       oAuthClient = new auth.OAuth2(config.calendar.clientId, config.calendar.clientSecret, config.calendar.callBackURL),
       authed = false;
 
-  app.route('/calendar')
-    .get(function(req, res) {
-      var uid = req.params.uid;
-
-      if (!authed) {
-        var url = oAuthClient.generateAuthUrl({
-          access_type: 'offline',
-          scope: 'https://www.googleapis.com/auth/calendar.readonly',
-          approval_prompt: 'force',
-          state: uid
-        });
-        res.redirect(url);
-      } else {
-        var calendar = google.calendar('v3');
-        console.log("ouath client", oAuthClient);
-        
-        calendar.events.list({
-          calendarId: 'primary',
-          timeMin: moment.utc().format(),
-          timeMax: moment().add(1, 'days').utc().format(),
-          singleEvents: true,
-          orderBy: 'startTime',
-          auth: oAuthClient
-        }, function(err, response) {
-          if (err) {
-            console.log('The API returned an error: ' + err);
-            return;
-          }
-
-          var events = buildEventsObject(response.items);       
-          return res.json(events);
-        });
-      }
-    });
-
   app.route('/:uid/calendar')
     .post(function(req, res) {
       var uid = req.params.uid;
@@ -84,6 +49,11 @@ module.exports = function(app, config) {
             
             var data = {};
             data.items = buildEventsObject(body.items);
+
+            if (!data.items) {
+              return res.sendStatus(400).json({ error: 'Insufficient calendar details!' });
+            }
+
             data.tokens = tokens;
             calendarRef.child(uid).set(data, function (err) {
               if (!err) {
@@ -112,36 +82,6 @@ module.exports = function(app, config) {
       })
     });
 
-  app.route('/calendar/callback')
-    .get(function (req, res) {
-      var code = req.query.code;
-      console.log(code);
-      oAuthClient.getToken(code, function(err, tokens) {
-        if (err) {
-          console.log('Error authenticating', err);
-        } else {
-          oAuthClient.setCredentials(tokens);
-          authed = true;
-          res.redirect('/calendar');
-        }
-      });
-    });
-
-  app.route('/user/:uid/calendar')
-    .post(function (req, res) {
-      var uid = req.params.uid;
-      var body = req.body.calendar;
-      var JSONObj = JSON.parse(body);
-
-      root.child('users').child(uid).set(body, function(err) {
-        if (!err) {
-          return res.json({
-            response: 'Successfully saved calendar'
-          });
-        }
-      });
-    });
-
   function buildEventsObject(data) {
     var i, events = [], eventDetails;
 
@@ -155,6 +95,9 @@ module.exports = function(app, config) {
         eventDetails.summary    = data[i].summary;
         events.push(eventDetails);
       }
+      else {
+        return false;
+      }
     }
 
     return events;
@@ -163,7 +106,7 @@ module.exports = function(app, config) {
   function shortList(data) {
     var i, arr = [],
         now = moment.utc().format(),
-        tomorrow = moment().add(1, 'days').utc().format();
+        tomorrow = moment().add(2, 'days').utc().format();
 
     for (i in data) {
       var time = moment(data[i].start);
