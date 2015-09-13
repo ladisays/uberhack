@@ -30,6 +30,7 @@ module.exports = function(app, config) {
           for (id in requests) {
             if (requests[id].uid === uid) {
               // if user has requests available, push them into an array
+              requests[id].id = id;
               userRequests.push(requests[id]);
             }
           }
@@ -56,6 +57,7 @@ module.exports = function(app, config) {
 
   app.route('/users/:id/requests').post(function(req, res) {
     var user, params, product, products, destination,
+    		options = { sensor: true },
     		uid = req.params.id,
     		data = req.body;
 
@@ -71,9 +73,23 @@ module.exports = function(app, config) {
 
     if (typeof(data.location) === "string") { data.location = JSON.parse(data.location); }
 
-    if (!data.location.longitude) { res.sendStatus(400).json({ error: 'No longitude provided!' }); }
+    if (data.location.address) {
+    	geocoder.geocode(data.location.address, function (err, coords) {
+        if (err) {
+          console.log(err);
+          return res.sendStatus(400).json({ error: 'Unable to get co-ordinates for the pickup location!' });
+        }
 
-    if (!data.location.latitude) { res.sendStatus(400).json({ error: 'No latitude provided!' }); }
+        data.location.longitude = coords.results[0].geometry.location.lng;
+        data.location.latitude = coords.results[0].geometry.location.lat;
+      }, options);
+    }
+
+    else {
+	    if (!data.location.longitude) { res.sendStatus(400).json({ error: 'No longitude provided!' }); }
+
+	    if (!data.location.latitude) { res.sendStatus(400).json({ error: 'No latitude provided!' }); }
+	  }
 
     console.log(data);
 
@@ -94,6 +110,8 @@ module.exports = function(app, config) {
 
 	    request.get(params, function (err, response, body) {
 	      if (err) { res.sendStatus(400).json({ error: err }); }
+
+	      if (!body) { res.sendStatus(400).json({ error: 'Could not get an Uber product!' }); }
 
 	      body = JSON.parse(body);
 	      console.log(body);

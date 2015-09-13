@@ -13,47 +13,12 @@ module.exports = function(app, config) {
       oAuthClient = new auth.OAuth2(config.calendar.clientId, config.calendar.clientSecret, config.calendar.callBackURL),
       authed = false;
 
-  app.route('/calendar')
-    .get(function(req, res) {
-      var uid = req.params.uid;
-
-      if (!authed) {
-        var url = oAuthClient.generateAuthUrl({
-          access_type: 'offline',
-          scope: 'https://www.googleapis.com/auth/calendar.readonly',
-          approval_prompt: 'force',
-          state: uid
-        });
-        res.redirect(url);
-      } else {
-        var calendar = google.calendar('v3');
-        console.log("ouath client", oAuthClient);
-        
-        calendar.events.list({
-          calendarId: 'primary',
-          timeMin: moment.utc().format(),
-          // timeMax: moment().add(1, 'days').utc().format(),
-          singleEvents: true,
-          orderBy: 'startTime',
-          auth: oAuthClient
-        }, function(err, response) {
-          if (err) {
-            console.log('The API returned an error: ' + err);
-            return;
-          }
-
-          // var events = buildEventsObject(response.items);       
-          return res.json(response);
-        });
-      }
-    });
-
   app.route('/:uid/calendar')
     .post(function(req, res) {
       var uid = req.params.uid;
       var tokens = {
         accessToken: req.body.accessToken,
-        refreshToken: req.body.refreshToken || null
+        refreshToken: req.body.refreshToken
       };
 
       calendarRef.child(uid).once('value', function (snap) {
@@ -115,68 +80,6 @@ module.exports = function(app, config) {
           return res.json({ error: 'User does not have a calendar!' });
         }
       })
-    });
-
-  app.route('/calendar/callback')
-    .get(function (req, res) {
-      var code = req.query.code;
-      var uid = req.query.state;
-      console.log('\nCode, UID ------------------ ', code, uid);
-      oAuthClient.getToken(code, function(err, tokens) {
-        if (err) {
-          console.log('Error authenticating', err);
-        } else {
-          oAuthClient.setCredentials(tokens);
-          console.log(tokens);
-          authed = true;
-          // res.redirect('/calendar');
-          var params = { 
-            url: 'https://andelahack.herokuapp.com/' + uid + '/calendar',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              accessToken: tokens.access_token,
-              refreshToken: tokens.refresh_token
-            })
-          };
-
-          request.post(params, function (err, response, body) {
-            if (err) {
-              res.sendStatus(400).json({ error: err});
-            }
-
-            body = body.response || JSON.parse(body).response;
-            res.json({ response: body });
-          });
-        }
-      });
-    });
-
-  app.route('/user/:uid/calendar')
-    .post(function (req, res) {
-      var data, uid = req.params.uid;
-      var calendar = req.body.calendar || JSON.parse(req.body).calendar;
-      console.log(calendar);
-
-      calendarRef.child(uid).once('value', function (snap) {
-        if (snap.val()) {
-          console.log('User already has a calendar');
-          data = snap.val();
-          data = shortList(data.items);
-
-          res.json({ response: data });
-        } else {
-          data = {};
-          data.items = buildEventsObject(calendar.items);
-
-          calendarRef.child(uid).set(data, function (err) {
-            if (!err) {
-              data = shortList(data.items);
-              
-              res.json({ response: data });
-            }
-          });
-        }
-      });
     });
 
   function buildEventsObject(data) {
