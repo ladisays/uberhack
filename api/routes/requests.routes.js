@@ -56,12 +56,12 @@ module.exports = function(app, config) {
   });
 
   app.route('/users/:id/requests').post(function(req, res) {
-    var user, params, product, products, destination,
+    var user, params, product, products,
     		options = { sensor: true },
     		uid = req.params.id,
     		data = req.body;
 
-    console.log(data);
+    console.log('\n\nRequest body...\n--------------------\n', data);
 
     if (!data) { res.sendStatus(400).json({ error: 'Invalid request!' }); }
 
@@ -73,135 +73,131 @@ module.exports = function(app, config) {
 
     if (!data.location) { res.sendStatus(400).json({ error: 'No location details!' }); }
 
-    if (typeof data.location === 'string') { data.location = JSON.parse(data.location); }
+  	geocoder.geocode(data.location, function (err, coords) {
+      if (err) {
+        console.log(err);
+        return res.sendStatus(400).json({ error: 'Unable to get co-ordinates for the pickup location!' });
+      }
 
-    if (!data.location.address) {
-	    if (!data.location.longitude) { res.sendStatus(400).json({ error: 'No longitude provided!' }); }
+      if (!coords.results[0].formatted_address || (!coords.results[0].geometry.location.lat && !coords.results[0].geometry.location.lng)) {
+      	return res.sendStatus(400).json({ error: 'Invalid address supplied for your pickup location!' });
+      }
 
-	    if (!data.location.latitude) { res.sendStatus(400).json({ error: 'No latitude provided!' }); }
-	  }
+      data.location = {
+      	address 		: coords.results[0].formatted_address,
+      	latitude 		: coords.results[0].geometry.location.lat,
+      	longitude 	: coords.results[0].geometry.location.lng
+      };
 
-    if (data.location.address) {
-    	geocoder.geocode(data.location.address, function (err, coords) {
-        if (err) {
-          console.log(err);
-          return res.sendStatus(400).json({ error: 'Unable to get co-ordinates for the pickup location!' });
-        }
+	    usersRef.child(uid).once('value', function (snap) {
+	    	if (!snap.val()) { res.sendStatus(400).json({ error: 'User does not exist!' }); }
 
-        data.location['longitude'] = coords.results[0].geometry.location.lng;
-        data.location['latitude'] = coords.results[0].geometry.location.lat;
+	    	data.uid = uid;
 
-		    usersRef.child(uid).once('value', function (snap) {
-		    	if (!snap.val()) { res.sendStatus(400).json({ error: 'User does not exist!' }); }
+	    	user = snap.val();
+	    	params = {
+		      url: 'https://api.uber.com/v1/products',
+		      qs: {
+		      	server_token 	: config.uber.server_token,
+		        latitude 			: data.location.latitude,
+		        longitude 		: data.location.longitude
+		      }
+		    };
 
-		    	data.uid = uid;
+		    request.get(params, function (err, response, body) {
+		      if (err) { res.sendStatus(400).json({ error: err }); }
 
-		    	user = snap.val();
-		    	params = {
-			      url: 'https://api.uber.com/v1/products',
-			      qs: {
-			      	server_token: config.uber.server_token,
-			        latitude: data.location.latitude,
-			        longitude: data.location.longitude
-			      }
-			    };
+		      if (!body) { return res.sendStatus(400).json({ error: 'Could not get an Uber product!' }); }
 
-			    request.get(params, function (err, response, body) {
-			      if (err) { res.sendStatus(400).json({ error: err }); }
+		      body = JSON.parse(body);
+		      console.log('\n\nUber products...\n-------------------------\n', body);
 
-			      if (!body) { return res.sendStatus(400).json({ error: 'Could not get an Uber product!' }); }
+		      products = body.products;
 
-			      body = JSON.parse(body);
-			      console.log(body);
-			      products = body.products;
+		      if (!products) {
+		      	return res.sendStatus(400).json({ error: 'Unable to find products in your area!' });
+		      }
 
-			      if (!products) {
-			      	return res.sendStatus(400).json({ error: 'Unable to find products in your area!' });
-			      }
+		      for (i in  products) {
+		      	if (products[i].display_name == data.productType) {
+		      		product = products[i];
+		      	}
+		      }
 
-			      for (i in  products) {
-			      	if (products[i].display_name == data.productType) {
-			      		product = products[i];
-			      	}
-			      }
+		      data.product = {
+		      	id 		: product.product_id,
+		      	type 	: data.productType
+		      };
 
-			      data.product = {
-			      	id: product.product_id,
-			      	type: data.productType
-			      };
+		      // Remove unwanted key from the object
+		      delete data['productType'];
 
-			      delete data['productType'];
+		      // Get the destination co-ordinates
+		      geocoder.geocode(data.destination, function (err, address) {
+		      	if (err) { res.sendStatus(400).json({ error: 'Unable to calculate co-ordinates for your destination address!' }); }
 
-			      params.url = 'https://andelahack.herokuapp.com/location';
-			      params.qs = { street: data.destination };
+		      	if (!coords.results[0].formatted_address || (!coords.results[0].geometry.location.lat && !coords.results[0].geometry.location.lng)) {
+		      		return res.sendStatus(400).json({ error: 'Invalid destination address!' });
+		      	}
 
-			      request.get(params, function (err, response, body) {
-			      	if (err) { res.sendStatus(400).json({ error: err }); }
+						data.destination = {
+							address 		: address.results[0].formatted_address,
+							latitude 		: address.results[0].geometry.location.lat,
+							longitude 	: address.results[0].geometry.location.lng
+						};
 
-			      	if (!body) {
-			      		return res.sendStatus(400).json({ error: 'Unable to find the co-ordinates for your destination!' });
-			      	}
+						// Set the params object for making a call to Uber's Estimate endpoint
+						params.url = 'https://sandbox-api.uber.com/v1/requests/estimate';
+						params.headers = {
+							'Authorization': 'Bearer ' + user.accessToken,
+							'Content-Type': 'application/json'
+						};
 
-			      	body = JSON.parse(body);
-			      	destination = data.destination;
+						params.body = JSON.stringify({
+							start_latitude		: data.location.latitude,
+							start_longitude		: data.location.longitude,
+							end_latitude			: data.destination.latitude,
+							end_longitude			: data.destination.longitude,
+							product_id				: data.product.id
+						});
 
-							data.destination = {
-								address: destination,
-								latitude: body.response.lat,
-								longitude: body.response.lng
-							};
+						params.qs = {};
 
-							params.url = 'https://sandbox-api.uber.com/v1/requests/estimate';
-							params.headers = {
-								'Authorization': 'Bearer ' + user.accessToken,
-								'Content-Type': 'application/json'
-							};
+						// Get the estimated duration for the requested trip
+			  		request.post(params, function (err, response, body)  {
+			  			if (err) { res.sendStatus(400).json({ error: err }); }
 
-							params.body = JSON.stringify({
-								start_latitude		: data.location.latitude,
-								start_longitude		: data.location.longitude,
-								end_latitude			: data.destination.latitude,
-								end_longitude			: data.destination.longitude,
-								product_id				: data.product.id
+			  			if (!body) {
+			  				return res.sendStatus(400).json({ error: 'Unable to calculate estimates! Please, try again later!' });
+			  			}
+
+			  			body = JSON.parse(body);
+			  			var duration_estimate = body.trip.duration_estimate,
+			  					pickup_estimate = body.pickup_estimate,
+			  					time = moment(data.startTime).subtract(15, 'minutes').format(),
+			  					reminder = moment(time).subtract(duration_estimate, 'seconds').format();
+
+			  			data.estimates = {
+			  				duration: duration_estimate,
+			  				reminder: reminder
+			  			};
+
+			  			data.created = moment().format();
+
+							requestsRef.push(data, function (err) {
+								if (!err) {
+									console.log('\n\nPushing to firebase...\n--------------------------\n', data);
+									res.json({ response: data });
+								}
+								else {
+									res.sendStatus(400).json({ message: 'Unable to save data to firebase!', error: err });
+								}
 							});
-
-							params.qs = {};
-
-				  		request.post(params, function (err, response, body)  {
-				  			if (err) { res.sendStatus(400).json({ error: err }); }
-
-				  			if (!body) {
-				  				return res.sendStatus(400).json({ error: 'Unable to calculate estimates! Please, try again later!' });
-				  			}
-
-				  			body = JSON.parse(body);
-				  			var duration_estimate = body.trip.duration_estimate,
-				  					pickup_estimate = body.pickup_estimate,
-				  					time = moment(data.startTime).subtract(15, 'minutes').format(),
-				  					reminder = moment(time).subtract(duration_estimate, 'seconds').format();
-
-				  			data.estimates = {
-				  				duration: duration_estimate,
-				  				reminder: reminder
-				  			};
-
-				  			data.created = moment().format();
-
-								requestsRef.push(data, function (err) {
-									if (!err) {
-										console.log('\n\nPushing to firebase...', data);
-										res.json({ response: data });
-									}
-									else {
-										res.sendStatus(400).json({ message: 'Unable to save data to firebase!', error: err });
-									}
-								});
-				  		});
-				  	});
-			    });
+			  		});
+			  	}, options);
 		    });
-			}, options);
-    }
+	    });
+		}, options);
   });
 
   app.route('/users/:uuid/requests/:id').delete(function (req, res) {
