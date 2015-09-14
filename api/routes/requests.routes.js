@@ -79,7 +79,7 @@ module.exports = function(app, config) {
         return res.sendStatus(400).json({ error: 'Unable to get co-ordinates for the pickup location!' });
       }
 
-      if (!coords.results[0].formatted_address || (!coords.results[0].geometry.location.lat && !coords.results[0].geometry.location.lng)) {
+      if (!coords.results || !coords.results[0] || (!coords.results[0].geometry.location.lat || !coords.results[0].geometry.location.lng)) {
       	return res.sendStatus(400).json({ error: 'Invalid address supplied for your pickup location!' });
       }
 
