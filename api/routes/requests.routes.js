@@ -172,6 +172,12 @@ module.exports = function(app, config) {
 			  			}
 
 			  			body = JSON.parse(body);
+			  			console.log('\n\nPushing to firebase...\n--------------------------\n', body);
+
+			  			if (!body.trip || !body.pickup_estimate) {
+			  				return res.sendStatus(400).json({ error: 'Unable to get estimates! Please, try again later!' });
+			  			}
+
 			  			var duration_estimate = body.trip.duration_estimate,
 			  					pickup_estimate = body.pickup_estimate,
 			  					time = moment(data.startTime).subtract(15, 'minutes').format(),
@@ -184,13 +190,18 @@ module.exports = function(app, config) {
 
 			  			data.created = moment().format();
 
-							requestsRef.push(data, function (err) {
+			  			var newRequestRef = requestsRef.push();
+			  			var request_id = newRequestRef.key();
+
+							newRequestRef.set(data, function (err) {
 								if (!err) {
+									data['id'] = request_id;
 									console.log('\n\nPushing to firebase...\n--------------------------\n', data);
-									res.json({ response: data });
+									
+									return res.json({ response: data });
 								}
 								else {
-									res.sendStatus(400).json({ message: 'Unable to save data to firebase!', error: err });
+									return res.sendStatus(400).json({ message: 'Unable to save data to firebase!', error: err });
 								}
 							});
 			  		});
