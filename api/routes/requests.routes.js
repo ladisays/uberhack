@@ -322,32 +322,34 @@ module.exports = function(app, config) {
 							}
 						});	
 					}
-					// Assign the single trip request to a trip variable
-					trip = trips[id];
+					else {
+						// Assign the single trip request to a trip variable
+						trip = trips[id];
 
-					params.url = 'https://sandbox-api.uber.com/v1/requests/' + trip.request_id;
-					params.headers = {
-						'Authorization': 'Bearer ' + user.accessToken,
-						'Content-Type': 'application/json'
-					};
+						params.url = 'https://sandbox-api.uber.com/v1/requests/' + trip.request_id;
+						params.headers = {
+							'Authorization': 'Bearer ' + user.accessToken,
+							'Content-Type': 'application/json'
+						};
 
-					// Make a delete request to uber's api to delete the request
-					request.del(params, function (err, response, body) {
-						if (err) {
-							return res.sendStatus(400).json({ error: 'Unable to cancel this uber trip!' });
-						}
+						// Make a delete request to uber's api to delete the request
+						request.del(params, function (err, response, body) {
+							if (err) {
+								return res.sendStatus(400).json({ error: 'Unable to cancel this uber trip!' });
+							}
 
-						if (response.statusCode === 204) {
-							requestSnap.ref().remove(function (err) {
-								if (!err) {
-									return res.json({response: 'Successfully deleted request!' });
-								}
-							});
-						}
-						else {
-							return res.sendStatus(400).json({ error: 'Unable to cancel this request!' });
-						}
-					});
+							if (response.statusCode === 204) {
+								requestSnap.ref().remove(function (err) {
+									if (!err) {
+										return res.json({response: 'Successfully deleted request!' });
+									}
+								});
+							}
+							else {
+								return res.sendStatus(400).json({ error: 'Unable to cancel this request!' });
+							}
+						});
+					}
 				});
 			});
 		});
