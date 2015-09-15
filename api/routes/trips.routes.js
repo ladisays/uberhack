@@ -79,7 +79,17 @@ module.exports = function(app, config) {
 		  			request.post(params, function (err, response, body) {
 		  				if (err) { res.sendStatus(400).json({ error: err }); }
 
+		  				var i;
 		  				body = JSON.parse(body);
+		  				
+		  				if (!body) { return res.sendStatus(400).json({ error: 'Unable to make request!' }); }
+
+		  				for (i in body) {
+		  					if (body[i] === null) {
+		  						body[i] = '';
+		  					}
+		  				}
+
 		  				body.created = moment().format();
 		  				
 		  				trips.child(uuid).child(request_id).set(body, function (err) {

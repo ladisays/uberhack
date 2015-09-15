@@ -199,9 +199,87 @@ module.exports = function(app, config) {
 	    });
 		}, options);
   });
+	
+	app.route('/users/:uuid/requests/:id').get(function (req, res) {
+		var user, userTrips, trip,
+				params = {},
+				uuid = req.params.uuid,
+				id = req.params.id;
+
+		// Find the user from the database with the user's id
+		usersRef.child(uuid).once('value', function (snap) {
+			if (!snap.val()) {
+				// If user doesn't exist, return a 404 error
+				return res.sendStatus(404).json({ error: 'User not found!' });
+			}
+
+			// If user exists, assign the object to the `user` variable
+			user = snap.val();
+
+			// Then, find the request with the request id
+			requestsRef.child(id).once('value', function (snap) {
+				if (!snap.val()) {
+					// If the request doesn't exist, return a 404 error
+					return res.sendStatus(404).json({ error: 'Request not found!' });
+				}
+
+				requestData = snap.val();
+
+				// Check if the request has details for a trip
+				tripsRef.child(uuid).once('value', function (snap) {
+					if (snap.val()) {
+						// If the request has a trip, add it to the requestData object
+						userTrips = snap.val();
+						trip = userTrips[id];
+
+						if (trip) {
+							if (trip.status === 'accepted') {
+								requestData['trip'] = trip;
+								console.log('\n\nRequest Data with trip details\n--------------------------\n', requestData);
+
+								return res.json({ response: requestData });
+							}
+							else {
+								// Set the params object for making a call to Uber's Estimate endpoint
+								params.url = 'https://sandbox-api.uber.com/v1/requests/' + trip.request_id;
+								params.headers = {
+									'Authorization': 'Bearer ' + user.accessToken,
+									'Content-Type': 'application/json'
+								};
+
+								request.get(params, function (err, response, body) {
+									if (!err) {
+										requestData['trip'] = JSON.parse(body) || '';
+										console.log('\n\nRequest Data with trip details\n--------------------------\n', requestData);
+
+										return res.json({ response: requestData });
+									}
+								});
+							}
+						}
+						else {
+							requestData['trip'] = '';
+							console.log('\n\nRequest Data with trip details\n--------------------------\n', requestData);
+
+							return res.json({ response: requestData });
+						}
+					}
+					else {
+						// If it doesn't have a trip, add an empty trip object to the requestData object
+						requestData['trip'] = '';
+						console.log('\n\nRequest Data with trip details\n--------------------------\n', requestData);
+
+						return res.json({ response: requestData });
+					}
+				});
+			});
+		});
+	});
 
   app.route('/users/:uuid/requests/:id').delete(function (req, res) {
-		var uuid	= req.params.uuid,
+		var user, trip, trips,
+				params = {},
+				uuid	= req.params.uuid,
 				id	= req.params.id;
 		console.log(uuid, id);
 
@@ -209,18 +287,56 @@ module.exports = function(app, config) {
 		usersRef.child(uuid).once('value', function (snap) {
 			if (!snap.val()) {
 				// If the user doesn't exist, return an error message
-				return res.json({error: 'User not found!'});
+				return res.sendStatus(404).json({error: 'User not found!'});
 			}
-			requestsRef.child(id).once('value', function (snap) {
-				if (!snap.val()) {
+			// Assign the returned user object to the `user` variable
+			user = snap.val();
+
+			// Find the request in the requestsRef
+			requestsRef.child(id).once('value', function (requestSnap) {
+				if (!requestSnap.val()) {
 					// if the request doesn't exist, return an error message
-					return res.json({error: 'Request not found!'});
+					return res.sendStatus(404).json({error: 'Request not found!'});
 				}
-				// if the request exists, delete it from the firebase requests
-				snap.ref().remove(function (err) {
-					if (!err) {
-						return res.json({response: 'Successfully deleted!'});
+
+				// if the request exists, delete it from uber's API and then from the firebase requests
+				tripsRef.child(uuid).once('value', function (tripSnap) {
+					trips = tripSnap.val();
+
+					// If there are no trips or no trip with the request id, delete the request from firebase
+					if (!trips || !trips[id]) {
+						requestSnap.ref().remove(function (err) {
+							if (!err) {
+								return res.json({response: 'Successfully deleted!'});
+							}
+						});	
 					}
+					// Assign the single trip request to a trip variable
+					trip = trips[id];
+
+					params.url = 'https://sandbox-api.uber.com/v1/requests/' + trip.request_id;
+					params.headers = {
+						'Authorization': 'Bearer ' + user.accessToken,
+						'Content-Type': 'application/json'
+					};
+
+					// Make a delete request to uber's api to delete the request
+					request.del(params, function (err, response, body) {
+						if (err) {
+							return res.sendStatus(400).json({ error: 'Unable to cancel this uber trip!' });
+						}
+
+						if (response.statusCode === 204) {
+							requestSnap.ref().remove(function (err) {
+								if (!err) {
+									return res.json({response: 'Successfully deleted request!' });
+								}
+							});
+						}
+						else {
+							return res.sendStatus(400).json({ error: 'Unable to cancel this request!' });
+						}
+					});
 				});
 			});
 		});
