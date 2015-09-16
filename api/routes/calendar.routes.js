@@ -51,7 +51,7 @@ module.exports = function(app, config) {
             data.items = buildEventsObject(body.items);
 
             if (!data.items) {
-              return res.sendStatus(400).json({ error: 'Insufficient calendar details!' });
+              return res.status(400).json({ error: 'Insufficient calendar details!' });
             }
 
             data.tokens = tokens;

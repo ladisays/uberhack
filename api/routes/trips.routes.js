@@ -16,7 +16,7 @@ module.exports = function(app, config) {
   	if (id) {
   		trips.child(uuid).child(id).once('value', function (snap) {
   			if (!snap.val()) {
-  				res.sendStatus(404).json({ error: 'This trip was not found!' });
+  				res.status(404).json({ error: 'This trip was not found!' });
   			}
   			else {
   				data = snap.val();
@@ -27,7 +27,7 @@ module.exports = function(app, config) {
   	else {
   		trips.child(uuid).once('value', function (snap) {
   			if (!snap.val()) {
-  				res.sendStatus(404).json({ error: 'This user has no trips available!' });
+  				res.status(404).json({ error: 'This user has no trips available!' });
   			}
   			else {
   				data = snap.val();
@@ -42,21 +42,21 @@ module.exports = function(app, config) {
   			uuid = req.params.uuid,
   			body = req.body;
 
-  	if (!body) { res.sendStatus(400).json({ error: 'This request cannot be processed!' }); }
-  	if (!body.request_id) { res.sendStatus(400).json({ error: 'Missing request id' }); }
+  	if (!body) { res.status(400).json({ error: 'This request cannot be processed!' }); }
+  	if (!body.request_id) { res.status(400).json({ error: 'Missing request id' }); }
   	else {
   		request_id = body.request_id;
 
   		requests.child(request_id).once('value', function (snap) {
   			if (!snap.val()) {
-  				res.sendStatus(400).json({ error: 'This request could not be completed!' });
+  				res.status(400).json({ error: 'This request could not be completed!' });
   			}
 
   			requestData = snap.val();
   			if (requestData.uid === uuid) {
   				users.child(uuid).once('value', function (snap) {
   					if (!snap.val()) {
-  						res.sendStatus(400).json({ error: 'This request cannot be processed because the user cannot be found!' });
+  						res.status(400).json({ error: 'This request cannot be processed because the user cannot be found!' });
   					}
 
   					user = snap.val();
@@ -77,12 +77,12 @@ module.exports = function(app, config) {
 		  			};
 
 		  			request.post(params, function (err, response, body) {
-		  				if (err) { res.sendStatus(400).json({ error: err }); }
+		  				if (err) { res.status(400).json({ error: err }); }
 
 		  				var i;
 		  				body = JSON.parse(body);
 		  				
-		  				if (!body) { return res.sendStatus(400).json({ error: 'Unable to make request!' }); }
+		  				if (!body) { return res.status(400).json({ error: 'Unable to make request!' }); }
 
 		  				if (body.driver === null) {
 		  					body.driver = {
@@ -113,7 +113,7 @@ module.exports = function(app, config) {
 		  				body.created = moment().format();
 		  				
 		  				trips.child(uuid).child(request_id).set(body, function (err) {
-		  					if (err) { res.sendStatus(400).json({ error: err }); }
+		  					if (err) { res.status(400).json({ error: err }); }
 		  					
 		  					res.json({ response: body });
 		  				});

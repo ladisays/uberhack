@@ -20,7 +20,7 @@ module.exports = function(app, config) {
     usersRef.child(uid).once('value', function(snap) {
       if (!snap.val()) {
         // If the user doesn't exist, return an error message
-        return res.sendStatus(400).json({ error: 'User not found!' });
+        return res.status(400).json({ error: 'User not found!' });
       }
       // retrieve all requests
       requestsRef.once('value', function(snap) {
@@ -40,13 +40,13 @@ module.exports = function(app, config) {
             });
           } else {
             // if user has no requests, return an error message
-            return res.sendStatus(400).json({
+            return res.status(400).json({
               error: 'This user has no requests!'
             });
           }
         } else {
           // if there are no requests, return an error message
-          return res.sendStatus(400).json({
+          return res.status(400).json({
             error: 'There are no requests!'
           });
         }
@@ -63,24 +63,24 @@ module.exports = function(app, config) {
 
     console.log('\n\nRequest body...\n--------------------\n', data);
 
-    if (!data) { res.sendStatus(400).json({ error: 'Invalid request!' }); }
+    if (!data) { res.status(400).json({ error: 'Invalid request!' }); }
 
-    if (!data.destination) { res.sendStatus(400).json({ error: 'No destination address!' }); }
+    if (!data.destination) { res.status(400).json({ error: 'No destination address!' }); }
 
-    if (!data.startTime) { res.sendStatus(400).json({ error: 'No Start Time!' }); }
+    if (!data.startTime) { res.status(400).json({ error: 'No Start Time!' }); }
 
-    if (!data.productType) { res.sendStatus(400).json({ error: 'No Uber product was found!' }); }
+    if (!data.productType) { res.status(400).json({ error: 'No Uber product was found!' }); }
 
-    if (!data.location) { res.sendStatus(400).json({ error: 'No location details!' }); }
+    if (!data.location) { res.status(400).json({ error: 'No location details!' }); }
 
   	geocoder.geocode(data.location, function (err, coords) {
       if (err) {
         console.log(err);
-        return res.sendStatus(400).json({ error: 'Unable to get co-ordinates for the pickup location!' });
+        return res.status(400).json({ error: 'Unable to get co-ordinates for the pickup location!' });
       }
 
       if (!coords.results || !coords.results[0] || (!coords.results[0].geometry.location.lat || !coords.results[0].geometry.location.lng)) {
-      	return res.sendStatus(400).json({ error: 'Invalid address supplied for your pickup location!' });
+      	return res.status(400).json({ error: 'Invalid address supplied for your pickup location!' });
       }
 
       data.location = {
@@ -90,7 +90,7 @@ module.exports = function(app, config) {
       };
 
 	    usersRef.child(uid).once('value', function (snap) {
-	    	if (!snap.val()) { res.sendStatus(400).json({ error: 'User does not exist!' }); }
+	    	if (!snap.val()) { res.status(400).json({ error: 'User does not exist!' }); }
 
 	    	data.uid = uid;
 
@@ -105,9 +105,9 @@ module.exports = function(app, config) {
 		    };
 
 		    request.get(params, function (err, response, body) {
-		      if (err) { res.sendStatus(400).json({ error: err }); }
+		      if (err) { res.status(400).json({ error: err }); }
 
-		      if (!body) { return res.sendStatus(400).json({ error: 'Could not get an Uber product!' }); }
+		      if (!body) { return res.status(400).json({ error: 'Could not get an Uber product!' }); }
 
 		      body = JSON.parse(body);
 		      console.log('\n\nUber products...\n-------------------------\n', body);
@@ -115,7 +115,7 @@ module.exports = function(app, config) {
 		      products = body.products;
 
 		      if (!products) {
-		      	return res.sendStatus(400).json({ error: 'Unable to find products in your area!' });
+		      	return res.status(400).json({ error: 'Unable to find products in your area!' });
 		      }
 
 		      for (i in  products) {
@@ -134,10 +134,10 @@ module.exports = function(app, config) {
 
 		      // Get the destination co-ordinates
 		      geocoder.geocode(data.destination, function (err, address) {
-		      	if (err) { res.sendStatus(400).json({ error: 'Unable to calculate co-ordinates for your destination address!' }); }
+		      	if (err) { res.status(400).json({ error: 'Unable to calculate co-ordinates for your destination address!' }); }
 
 		      	if (!address.results[0].formatted_address || (!address.results[0].geometry.location.lat && !address.results[0].geometry.location.lng)) {
-		      		return res.sendStatus(400).json({ error: 'Invalid destination address!' });
+		      		return res.status(400).json({ error: 'Invalid destination address!' });
 		      	}
 
 						data.destination = {
@@ -165,17 +165,17 @@ module.exports = function(app, config) {
 
 						// Get the estimated duration for the requested trip
 			  		request.post(params, function (err, response, body)  {
-			  			if (err) { res.sendStatus(400).json({ error: err }); }
+			  			if (err) { res.status(400).json({ error: err }); }
 
 			  			if (!body) {
-			  				return res.sendStatus(400).json({ error: 'Unable to calculate estimates! Please, try again later!' });
+			  				return res.status(400).json({ error: 'Unable to calculate estimates! Please, try again later!' });
 			  			}
 
 			  			body = JSON.parse(body);
 			  			console.log('\n\nPushing to firebase...\n--------------------------\n', body);
 
 			  			if (!body.trip || !body.pickup_estimate) {
-			  				return res.sendStatus(400).json({ error: 'Unable to get estimates! Please, try again later!' });
+			  				return res.status(400).json({ error: 'Unable to get estimates! Please, try again later!' });
 			  			}
 
 			  			var duration_estimate = body.trip.duration_estimate,
@@ -201,7 +201,7 @@ module.exports = function(app, config) {
 									return res.json({ response: data });
 								}
 								else {
-									return res.sendStatus(400).json({ message: 'Unable to save data to firebase!', error: err });
+									return res.status(400).json({ message: 'Unable to save data to firebase!', error: err });
 								}
 							});
 			  		});
@@ -221,7 +221,7 @@ module.exports = function(app, config) {
 		usersRef.child(uuid).once('value', function (snap) {
 			if (!snap.val()) {
 				// If user doesn't exist, return a 404 error
-				return res.sendStatus(404).json({ error: 'User not found!' });
+				return res.status(404).json({ error: 'User not found!' });
 			}
 
 			// If user exists, assign the object to the `user` variable
@@ -231,7 +231,7 @@ module.exports = function(app, config) {
 			requestsRef.child(id).once('value', function (snap) {
 				if (!snap.val()) {
 					// If the request doesn't exist, return a 404 error
-					return res.sendStatus(404).json({ error: 'Request not found!' });
+					return res.status(404).json({ error: 'Request not found!' });
 				}
 
 				requestData = snap.val();
@@ -298,7 +298,7 @@ module.exports = function(app, config) {
 		usersRef.child(uuid).once('value', function (snap) {
 			if (!snap.val()) {
 				// If the user doesn't exist, return an error message
-				return res.sendStatus(404).json({error: 'User not found!'});
+				return res.status(404).json({error: 'User not found!'});
 			}
 			// Assign the returned user object to the `user` variable
 			user = snap.val();
@@ -307,7 +307,7 @@ module.exports = function(app, config) {
 			requestsRef.child(id).once('value', function (requestSnap) {
 				if (!requestSnap.val()) {
 					// if the request doesn't exist, return an error message
-					return res.sendStatus(404).json({error: 'Request not found!'});
+					return res.status(404).json({error: 'Request not found!'});
 				}
 
 				// if the request exists, delete it from uber's API and then from the firebase requests
@@ -335,7 +335,7 @@ module.exports = function(app, config) {
 						// Make a delete request to uber's api to delete the request
 						request.del(params, function (err, response, body) {
 							if (err) {
-								return res.sendStatus(400).json({ error: 'Unable to cancel this uber trip!' });
+								return res.status(400).json({ error: 'Unable to cancel this uber trip!' });
 							}
 
 							if (response.statusCode === 204) {
@@ -346,7 +346,7 @@ module.exports = function(app, config) {
 								});
 							}
 							else {
-								return res.sendStatus(400).json({ error: 'Unable to cancel this request!' });
+								return res.status(400).json({ error: 'Unable to cancel this request!' });
 							}
 						});
 					}
