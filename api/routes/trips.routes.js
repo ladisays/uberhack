@@ -84,10 +84,30 @@ module.exports = function(app, config) {
 		  				
 		  				if (!body) { return res.sendStatus(400).json({ error: 'Unable to make request!' }); }
 
-		  				for (i in body) {
-		  					if (body[i] === null) {
-		  						body[i] = '';
-		  					}
+		  				if (body.driver === null) {
+		  					body.driver = {
+		  						name					: '',
+		  						phone_number	: '',
+		  						picture_url		: '',
+		  						rating				: ''
+		  					};
+		  				}
+		  				
+		  				if (body.vehicle === null) {
+		  					body.vehicle = {
+		  						make					: '',
+		  						model 				: '',
+		  						picture_url		: '',
+		  						license_plate	: ''
+		  					};
+		  				}
+
+		  				if (body.location === null) {
+		  					body.location = {
+		  						bearing		: '',
+		  						latitude 	: '',
+		  						longitude : ''
+		  					};
 		  				}
 
 		  				body.created = moment().format();
