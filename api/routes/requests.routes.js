@@ -79,7 +79,7 @@ module.exports = function(app, config) {
         return res.status(400).json({ error: 'Unable to get co-ordinates for the pickup location!' });
       }
 
-      if (!coords.results || !coords.results[0] || (!coords.results[0].geometry.location.lat || !coords.results[0].geometry.location.lng)) {
+      if (!coords.results || !coords.results[0] || !coords.results[0].formatted_address || (!coords.results[0].geometry.location.lat || !coords.results[0].geometry.location.lng)) {
       	return res.status(400).json({ error: 'Invalid address supplied for your pickup location!' });
       }
 
@@ -136,7 +136,7 @@ module.exports = function(app, config) {
 		      geocoder.geocode(data.destination, function (err, address) {
 		      	if (err) { res.status(400).json({ error: 'Unable to calculate co-ordinates for your destination address!' }); }
 
-		      	if (!address.results[0].formatted_address || (!address.results[0].geometry.location.lat && !address.results[0].geometry.location.lng)) {
+		      	if (!address.results || !address.results[0] || !address.results[0].formatted_address || (!address.results[0].geometry.location.lat && !address.results[0].geometry.location.lng)) {
 		      		return res.status(400).json({ error: 'Invalid destination address!' });
 		      	}
 
