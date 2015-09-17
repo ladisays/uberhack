@@ -110,7 +110,7 @@ module.exports = function(app, config) {
 		      if (!body) { return res.status(400).json({ error: 'Could not get an Uber product!' }); }
 
 		      body = JSON.parse(body);
-		      console.log('\n\nUber products...\n-------------------------\n', body);
+		      // console.log('\n\nUber products...\n-------------------------\n', body);
 
 		      products = body.products;
 
@@ -172,7 +172,7 @@ module.exports = function(app, config) {
 			  			}
 
 			  			body = JSON.parse(body);
-			  			console.log('\n\nPushing to firebase...\n--------------------------\n', body);
+			  			// console.log('\n\nPushing to firebase...\n--------------------------\n', body);
 
 			  			if (!body.trip || !body.pickup_estimate) {
 			  				return res.status(400).json({ error: 'Unable to get estimates! Please, try again later!' });

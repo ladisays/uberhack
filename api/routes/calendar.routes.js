@@ -13,6 +13,58 @@ module.exports = function(app, config) {
       oAuthClient = new auth.OAuth2(config.calendar.clientId, config.calendar.clientSecret, config.calendar.callBackURL),
       authed = false;
 
+  // Not to be removed - For local testing
+  app.route('/calendar')
+    .get(function(req, res) {
+      var uid = req.params.uid;
+
+      if (!authed) {
+        var url = oAuthClient.generateAuthUrl({
+          access_type: 'offline',
+          scope: 'https://www.googleapis.com/auth/calendar.readonly',
+          approval_prompt: 'force',
+          state: uid
+        });
+        res.redirect(url);
+      } else {
+        var calendar = google.calendar('v3');
+        console.log("ouath client", oAuthClient);
+        
+        calendar.events.list({
+          calendarId: 'primary',
+          timeMin: moment.utc().format(),
+          timeMax: moment().add(2, 'days').utc().format(),
+          singleEvents: true,
+          orderBy: 'startTime',
+          auth: oAuthClient
+        }, function(err, response) {
+          if (err) {
+            console.log('The API returned an error: ' + err);
+            return;
+          }
+
+          var events = buildEventsObject(response.items);       
+          return res.json(events);
+        });
+      }
+    });
+
+  // Not to be removed - For local testing
+  app.route('/calendar/callback')
+    .get(function (req, res) {
+      var code = req.query.code;
+      console.log(code);
+      oAuthClient.getToken(code, function(err, tokens) {
+        if (err) {
+          console.log('Error authenticating', err);
+        } else {
+          oAuthClient.setCredentials(tokens);
+          authed = true;
+          res.redirect('/calendar');
+        }
+      });
+    });
+
   app.route('/:uid/calendar')
     .post(function(req, res) {
       var uid = req.params.uid;
@@ -42,7 +94,7 @@ module.exports = function(app, config) {
           }, function (err, status, body) {
             if (err) {
               console.log('There is an error - ', err);
-              res.json({ error: err });
+              res.status(400).json({ error: err });
             }
 
             body = JSON.parse(body);
@@ -77,7 +129,7 @@ module.exports = function(app, config) {
 
           return res.json({ response: data });
         } else {
-          return res.json({ error: 'User does not have a calendar!' });
+          return res.status(400).json({ error: 'User does not have a calendar!' });
         }
       })
     });
@@ -94,9 +146,6 @@ module.exports = function(app, config) {
         eventDetails.location   = data[i].location;
         eventDetails.summary    = data[i].summary;
         events.push(eventDetails);
-      }
-      else {
-        return false;
       }
     }
 
